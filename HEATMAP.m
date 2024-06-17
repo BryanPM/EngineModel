@@ -10,8 +10,10 @@ myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 %% Parse the folder and calculate CoV for each file
 
 % Initialize variables
+IMEP = zeros(length(myFiles),1);
 CoV_IMEP = zeros(length(myFiles),1);
 DI_quantity = zeros(length(myFiles),1);
+DI_duration = zeros(length(myFiles),1);
 DI_timing = zeros(length(myFiles),1);
 CA50 = zeros(length(myFiles),1);
 Ammonia = zeros(length(myFiles),1);
@@ -24,9 +26,11 @@ for i = 1:length(myFiles)
 
     % Control variables
     DI_quantity(i) = mean(LowSpeed.Pilot_1_Injection_Quantity);
+    DI_duration(i) = mean(Cylinder_1_Cycle_Data.Injection_1_Duration);
     DI_timing(i) = -mean(Cylinder_1_Cycle_Data.Injection_1_SOI);
     
     % Dependet variables
+    IMEP(i) = mean(Cylinder_1_Cycle_Data.IMEPn);
     CoV_IMEP(i) = std(Cylinder_1_Cycle_Data.IMEPn)/mean(Cylinder_1_Cycle_Data.IMEPn)*100;
     CA50(i) = mean(Cylinder_1_Cycle_Data.CA50);
     Ammonia(i) = mean(LowSpeed.ISB_Fuel_Flow_PFI)/(mean(LowSpeed.ISB_Fuel_Flow+LowSpeed.ISB_Fuel_Flow_PFI))*100;

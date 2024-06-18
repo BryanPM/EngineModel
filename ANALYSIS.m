@@ -2,7 +2,8 @@ clear all
 close all
 clc
 
-load('20240305_1200_DI8_8_SOI43_PFI8_5_014.mat')
+myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+load([myDir, '20240305_1200_DI8_4_SOI44_PFI8_5_010.mat'])
 
 %% Print conditions
 

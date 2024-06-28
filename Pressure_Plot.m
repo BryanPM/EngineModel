@@ -4,7 +4,12 @@ clc
 
 % Load the file
 
-load('20240305_1200_DI7_8_SOI43_PFI8_5_019.mat')
+filename = "20240305_1200_DI6_6_SOI40_PFI8_5_044.mat";
+load(filename)
+
+% extract the filename for output data
+file = erase(filename, ".mat");
+ofile = append(file, "_X_res.csv");
 
 % Plot the Cylinder Pressure vs. Crank Angle
 
@@ -13,20 +18,29 @@ n_cycles = length(Cylinder_1_Cycle_Data.IMEPn);
 gamma = 1.3;
 EVC = -355;
 EVO = 165;
+CA_deg = linspace(-359.8, 360, 3600);
+Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
+
+i_evc = find(CA_deg == -355);
+i_evo = find(CA_deg == 160.8000);
 
 figure(1); clf
-plot_Pcyl(Cylinder_1_Synch_Data.Cylinder_Pressure, Pmax, n_cycles, EVC, EVO);
+plot_Pcyl(Pcyl_CA, Pmax, EVC, EVO);
 
 % Calculate the X_res as a function of cycle, k
 
-% Ask Dr. Maldonado/Kaul to explain timing/indexing
-X_res = (Volume.Volume() / Volume.Volume()) * (Cylinder_1_Synch_Data.Cylinder_Pressure() / Cylinder_1_Synch_Data.Cylinder_Pressure()) ^ (1 / gamma);
+X_res = zeros([1, 2000]);
+
+for i = 1:2000
+    X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
+end
+% 2000 cycles, 3600 data points per cycle = 7,200,000
+writematrix(X_res, ofile);
 
 % Function to plot, lifted from ANALYSIS.m
-function plot_Pcyl(Pcyl, Pmax, n_cycles, EVC, EVO)
-    % Crank angle undividual cycle
+function plot_Pcyl(Pcyl_CA, Pmax, EVC, EVO)
+    % Crank angle undisvidual cycle
     CA_deg = linspace(-359.8, 360, 3600);
-    Pcyl_CA = reshape(Pcyl, [3600, n_cycles]) * 1e-3;
 
     % Isolate compression and power stroke
     idx_comb  = find( CA_deg >= -360 & CA_deg <= 360 );
@@ -34,7 +48,7 @@ function plot_Pcyl(Pcyl, Pmax, n_cycles, EVC, EVO)
     
     % Combustion part
     Pcyl_comb = Pcyl_CA(idx_comb,:);
-
+    
     % Plot
     colormap(summer);
 

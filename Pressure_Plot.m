@@ -4,7 +4,7 @@ clc
 
 % Load the file
 
-filename = "20240305_1200_DI6_6_SOI40_PFI8_5_044.mat";
+filename = "20240305_1200_DI9_SOI42_PFI8_5_020.mat";
 load(filename)
 
 % extract the filename for output data

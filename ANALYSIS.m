@@ -63,6 +63,20 @@ plot_CA_signal(Cylinder_1_Synch_Data.Mass_Fraction_Burned, n_cycles, ...
     [-30, 60], 'MFB')
 
 %%
+
+CA_deg = linspace(-359.8, 360, 3600);
+Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 1e-3;
+volume = Volume.Volume;
+
+figure()
+plot(CA_deg,Pcyl_CA);
+ylabel('Cylinder Pressure (MPa)');
+title("Cylinder Pressure");
+
+figure()
+loglog(volume, Pcyl_CA)
+
+%%
 function plot_Pcyl(Pcyl, Pmax, n_cycles)
     % Crank angle undividual cycle
     CA_deg = linspace(-359.8, 360, 3600);

@@ -3,8 +3,8 @@ close all
 clc
 
 %% Load the folder for parsing
-% myDir = uigetdir;
-myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+myDir = '~/Applications/UTORII_DATA/';
+% myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 %% Parse the folder and calculate CoV for each file
@@ -29,11 +29,12 @@ for i = 1:length(myFiles)
     DI_duration(i) = mean(Cylinder_1_Cycle_Data.Injection_1_Duration);
     DI_timing(i) = -mean(Cylinder_1_Cycle_Data.Injection_1_SOI);
     
-    % Dependet variables
+    % Dependent variables
     IMEP(i) = mean(Cylinder_1_Cycle_Data.IMEPn);
     CoV_IMEP(i) = std(Cylinder_1_Cycle_Data.IMEPn)/mean(Cylinder_1_Cycle_Data.IMEPn)*100;
     CA50(i) = mean(Cylinder_1_Cycle_Data.CA50);
     Ammonia(i) = mean(LowSpeed.ISB_Fuel_Flow_PFI)/(mean(LowSpeed.ISB_Fuel_Flow+LowSpeed.ISB_Fuel_Flow_PFI))*100;
+    fprintf('%s\nCoV IMEP:              %.1f %s\n\n', baseName, std(Cylinder_1_Cycle_Data.IMEPn)/mean(Cylinder_1_Cycle_Data.IMEPn)*100, '%');
 
 end
 %% Interpolate values

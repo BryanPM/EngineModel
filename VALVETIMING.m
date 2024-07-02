@@ -37,6 +37,7 @@ for j = 1:length(myFiles)
     % Plot the Cylinder Pressure vs. Crank Angle
    % figure(k); clf
    % plot_Pcyl(Pcyl_CA, Pmax, EVC, EVO);
+   % k = k + 1;
    % 2000 cycles, 3600 data points per cycle = 7,200,000
 
     % Valve timings
@@ -54,9 +55,10 @@ for j = 1:length(myFiles)
 
         writematrix(X_res, ofile);
         % Plot after main loop
-        % plot_X_res(X_res, Cylinder_1_Cycle_Data.Gross_Heat_Release, filename, k)
     end
 end
+
+  plot_X_res(X_res, Cylinder_1_Cycle_Data.Gross_Heat_Release, filename, k)
 
 %% Function to plot Gross_Heat_Release v. X_res
 

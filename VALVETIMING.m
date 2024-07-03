@@ -45,7 +45,7 @@ for j = 15%1:length(myFiles)
     CoV_IMEP = std(Cylinder_1_Cycle_Data.IMEPn)/mean(Cylinder_1_Cycle_Data.IMEPn) * 100;
    
     % Only look at low variable conditions
-    if (CoV_IMEP <= 3)
+    if 1%(CoV_IMEP <= 3)
         fprintf("Writing file %s to %s\nCoV of IMEP: %.2f\n\n", filename, ofile, CoV_IMEP);
 
         % Calculate the X_res as a function of cycle, k

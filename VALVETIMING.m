@@ -2,7 +2,8 @@ clear all
 close all
 clc
 
-myDir = '~/Applications/UTORII_DATA/';
+myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+% myDir = '~/Applications/UTORII_DATA/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 % Constants
@@ -19,12 +20,12 @@ i_evo = find(CA_deg == 160.8000);
 k = 1; % figure counter
 
 %% Loop through all files in the folder
-for j = 1:length(myFiles)
+for j = 15%1:length(myFiles)
 
     clear Pcyl_CA;
 
     % Load the file
-    filename = myFiles(j).name;
+    filename = [myDir, myFiles(j).name];
     load(filename)
 
     % extract the filename for output data
@@ -53,12 +54,41 @@ for j = 1:length(myFiles)
             X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
         end
 
-        writematrix(X_res, ofile);
+        % writematrix(X_res, ofile);
         % Plot after main loop
     end
 end
 
-  plot_X_res(X_res, Cylinder_1_Cycle_Data.Gross_Heat_Release, filename, k)
+plot_X_res(X_res, Cylinder_1_Cycle_Data.Gross_Heat_Release, filename, k)
+
+%% Joint Gaussian PDF
+
+Q_gross = Cylinder_1_Cycle_Data.Gross_Heat_Release';
+
+% Combine data into a single matrix
+data = [Q_gross, X_res];
+
+% Estimate the mean and covariance matrix
+mu = mean(data);
+Sigma = cov(data);
+
+% Create a grid of (x, y) values
+x = linspace(min(Q_gross), max(Q_gross), 100);
+y = linspace(min(X_res), max(X_res), 100);
+[X, Y] = meshgrid(x, y);
+
+% Compute the bivariate Gaussian PDF
+Z = mvnpdf([X(:) Y(:)], mu, Sigma);
+Z = reshape(Z, length(x), length(y));
+
+% Plot the level curves (contour plot)
+figure; hold on
+scatter(Q_gross, X_res)
+contour(X, Y, Z);
+xlabel('Q_{gross}');
+ylabel('X_{res}');
+title('Level Curves of Fitted Bivariate Gaussian Distribution');
+grid on;
 
 %% Function to plot Gross_Heat_Release v. X_res
 

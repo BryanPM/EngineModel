@@ -3,8 +3,8 @@ close all
 clc
 
 %% Load the folder for parsing
-myDir = '~/Applications/UTORII_DATA/';
-% myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+% myDir = '~/Applications/UTORII_DATA/';
+myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 %% Parse the folder and calculate CoV for each file

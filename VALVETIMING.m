@@ -2,8 +2,8 @@ clear all
 close all
 clc
 
-myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
-% myDir = '~/Applications/UTORII_DATA/';
+% myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+myDir = '~/Applications/UTORII_DATA/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 % Constants
@@ -20,7 +20,7 @@ i_evo = find(CA_deg == 160.8000);
 k = 1; % figure counter
 
 %% Loop through all files in the folder
-for j = 15%1:length(myFiles)
+for j = 1:length(myFiles)
 
     clear Pcyl_CA;
 
@@ -32,24 +32,25 @@ for j = 15%1:length(myFiles)
     file = erase(filename, ".mat");
     ofile = append(file, "_X_res.csv");
 
-    n_cycles = length(Cylinder_1_Synch_Data.Cylinder_Pressure) / 3600;
+    n_cycles = length(Cylinder_1_Cycle_Data.IMEPn);
     Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
 
     % Plot the Cylinder Pressure vs. Crank Angle
    % figure(k); clf
    % plot_Pcyl(Pcyl_CA, Pmax, EVC, EVO);
    % k = k + 1;
-   % 2000 cycles, 3600 data points per cycle = 7,200,000
+   % 3600 data points per cycle = 7,200,000
 
     % Valve timings
     CoV_IMEP = std(Cylinder_1_Cycle_Data.IMEPn)/mean(Cylinder_1_Cycle_Data.IMEPn) * 100;
    
+    fprintf("%s\nCoV of IMEP: %.2f\n\n", filename, CoV_IMEP);
     % Only look at low variable conditions
-    if 1%(CoV_IMEP <= 3)
-        fprintf("Writing file %s to %s\nCoV of IMEP: %.2f\n\n", filename, ofile, CoV_IMEP);
+    if (Cylinder_1_Cycle_Data.Injection_1_SOI(1) <= -40)
+        
 
         % Calculate the X_res as a function of cycle, k
-        X_res = zeros([2000, 1]);
+        X_res = zeros([n_cycles, 1]);
         for i = 1:n_cycles
             X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
         end
@@ -59,7 +60,7 @@ for j = 15%1:length(myFiles)
     end
 end
 
-plot_X_res(X_res, Cylinder_1_Cycle_Data.Gross_Heat_Release, filename, k)
+% plot_X_res(X_res, Cylinder_1_Cycle_Data.Gross_Heat_Release, filename, k)
 
 %% Joint Gaussian PDF
 

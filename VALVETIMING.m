@@ -23,6 +23,7 @@ k = 1; % figure counter
 for j = 1:length(myFiles)
 
     clear Pcyl_CA;
+    clear n_cycles;
 
     % Load the file
     filename = [myDir, myFiles(j).name];

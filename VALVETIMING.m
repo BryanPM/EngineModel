@@ -17,10 +17,8 @@ CA_deg = linspace(-359.8, 360, 3600);
 i_evc = find(CA_deg == -355);
 i_evo = find(CA_deg == 160.8000);
 
-k = 1; % figure counter
-
 %% Loop through all files in the folder
-for j = 1:length(myFiles)
+for j = 1:15%1:length(myFiles)
 
     clear Pcyl_CA;
     clear n_cycles;
@@ -51,21 +49,32 @@ for j = 1:length(myFiles)
         if (Cylinder_1_Cycle_Data.Injection_1_SOI(1) <= -40)
             Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
 
-            % Calculate the X_res as a function of cycle, k
+            % Calculate the X_res
             X_res = zeros([n_cycles, 1]);
             for i = 1:n_cycles
                 X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
             end
-
-            mu = zeros([1, 2]);
-
-            mu(1) = mean(X_res);
-            mu(2) = mean(Cylinder_1_Cycle_Data.Gross_Heat_Release);
-
             
+            % Write calculated values to a new file
+            % writematrix(X_res, ofile);
+            
+            % Joint Gaussian PDF
+            Q_gross = Cylinder_1_Cycle_Data.Gross_Heat_Release';
 
-            writematrix(X_res, ofile);
-            % Plot after main loop
+            % Combine data into a single matrix
+            data = [Q_gross, X_res];
+
+            % Estimate the mean and covariance matrix
+            mu = mean(data);
+            Sigma = cov(data);
+
+            % random variable
+            a = randi([0, 100], 1, 1);
+
+            % Conditional mean and covariance
+            cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 1) * (a - mu(2));
+            cond_variance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2) * Sigma(2, 1);
+
         end
     else 
         fprintf("%s\n# of Cycles: %f\n\n", filename, n_cycles);
@@ -76,14 +85,7 @@ end
 
 %% Joint Gaussian PDF
 
-Q_gross = Cylinder_1_Cycle_Data.Gross_Heat_Release';
-
-% Combine data into a single matrix
-data = [Q_gross, X_res];
-
-% Estimate the mean and covariance matrix
-mu = mean(data);
-Sigma = cov(data);
+function plot_gaussian_pdf(Q_gross, X_res, mu, Sigma)
 
 % Create a grid of (x, y) values
 x = linspace(min(Q_gross), max(Q_gross), 100);
@@ -102,6 +104,8 @@ xlabel('Q_{gross}');
 ylabel('X_{res}');
 title('Level Curves of Fitted Bivariate Gaussian Distribution');
 grid on;
+
+end
 
 %% Function to plot Gross_Heat_Release v. X_res
 

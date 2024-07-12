@@ -34,7 +34,6 @@ for j = 1:length(myFiles)
     ofile = append(file, "_X_res.csv");
 
     n_cycles = length(Cylinder_1_Cycle_Data.IMEPn);
-    Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
 
     % Plot the Cylinder Pressure vs. Crank Angle
    % figure(k); clf
@@ -45,19 +44,31 @@ for j = 1:length(myFiles)
     % Valve timings
     CoV_IMEP = std(Cylinder_1_Cycle_Data.IMEPn)/mean(Cylinder_1_Cycle_Data.IMEPn) * 100;
    
-    fprintf("%s\nCoV of IMEP: %.2f\n\n", filename, CoV_IMEP);
-    % Only look at low variable conditions
-    if (Cylinder_1_Cycle_Data.Injection_1_SOI(1) <= -40)
-        
+    % This fixes the reshape error for files with a different n_cycles
+    if (mod(n_cycles, 100) == 0)
+        % fprintf("%s\nCoV of IMEP: %.2f\n\n", filename, CoV_IMEP);
+        % Only look at desirable conditions
+        if (Cylinder_1_Cycle_Data.Injection_1_SOI(1) <= -40)
+            Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
 
-        % Calculate the X_res as a function of cycle, k
-        X_res = zeros([n_cycles, 1]);
-        for i = 1:n_cycles
-            X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
+            % Calculate the X_res as a function of cycle, k
+            X_res = zeros([n_cycles, 1]);
+            for i = 1:n_cycles
+                X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
+            end
+
+            mu = zeros([1, 2]);
+
+            mu(1) = mean(X_res);
+            mu(2) = mean(Cylinder_1_Cycle_Data.Gross_Heat_Release);
+
+            
+
+            writematrix(X_res, ofile);
+            % Plot after main loop
         end
-
-        % writematrix(X_res, ofile);
-        % Plot after main loop
+    else 
+        fprintf("%s\n# of Cycles: %f\n\n", filename, n_cycles);
     end
 end
 

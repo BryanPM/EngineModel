@@ -3,7 +3,8 @@ close all
 clc
 
 myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
-load([myDir, '20240305_1200_DI8_4_SOI44_PFI8_5_010.mat'])
+load([myDir, '20240305_1200_DI6_6_SOI41_PFI8_5_038.mat'])
+% load([myDir, '20240305_1200_DI6_8_SOI40_PFI8_5_043.mat'])
 
 %% Print conditions
 

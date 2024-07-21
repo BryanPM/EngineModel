@@ -12,6 +12,7 @@ gamma = 1.3;
 EVC = -355;
 EVO = 165;
 CA_deg = linspace(-359.8, 360, 3600);
+k = 1;
 
 % Valve timings
 i_evc = find(CA_deg == -355);
@@ -50,7 +51,7 @@ for j = 1:15%1:length(myFiles)
             Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
 
             % Calculate the X_res
-            X_res = zeros([n_cycles, 1]);
+            X_res = zeros([1, n_cycles]);
             for i = 1:n_cycles
                 X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
             end
@@ -59,14 +60,14 @@ for j = 1:15%1:length(myFiles)
             % writematrix(X_res, ofile);
             
             % Joint Gaussian PDF
-            Q_gross = Cylinder_1_Cycle_Data.Gross_Heat_Release';
+            Q_gross = Cylinder_1_Cycle_Data.Gross_Heat_Release;
 
             % Combine data into a single matrix
             data = [Q_gross, X_res];
 
             % Estimate the mean and covariance matrix
-            mu = mean(data);
-            Sigma = cov(data);
+            mu = [mean(Q_gross), mean(X_res)];
+            Sigma = cov(Q_gross, X_res);
 
             % random variable
             a = randi([0, 100], 1, 1);
@@ -75,11 +76,28 @@ for j = 1:15%1:length(myFiles)
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 1) * (a - mu(2));
             cond_variance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2) * Sigma(2, 1);
 
+            X_res_sim = exp(-.5 .* transpose(a - mu) .* inv(Sigma) .* (a - mu)) ./ sqrt((2 .* pi) .^ k .* det(Sigma));
         end
     else 
         fprintf("%s\n# of Cycles: %f\n\n", filename, n_cycles);
     end
 end
+
+% Combine data into a single matrix
+%data = [Q_gross, X_res];
+% Combine data into a single matrix
+
+% Estimate the mean and covariance matrix
+%mu = mean(data);
+%Sigma = cov(data);
+
+% random variable
+%a = randi([0, 100], 1, 1);
+
+% Conditional mean and covariance
+%cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 1) * (a - mu(2));
+%cond_variance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2) * Sigma(2, 1);
+
 
 % plot_X_res(X_res, Cylinder_1_Cycle_Data.Gross_Heat_Release, filename, k)
 

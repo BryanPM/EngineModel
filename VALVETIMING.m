@@ -92,6 +92,7 @@ for j = 1:1%1:length(myFiles)
             figure
             scatter(Q_gross, X_res_per); hold on
             scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
+            xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
 
         end
     else 

@@ -66,14 +66,14 @@ for j = 1:1%1:length(myFiles)
             X_res_per = X_res * 100;
 
             % Combine data into a single matrix
-            data = [X_res_per; Q_gross]';
+            data = [Q_gross, X_res_per];
 
             % Estimate the mean and covariance matrix
-            mu = mean(data);
-            Sigma = cov(data);
+            mu = [mean(Q_gross), mean(X_res_per)];
+            Sigma = cov(Q_gross, X_res_per);
 
             % Joint Gaussian PDF
-            % X | Q = a ~ N(cond_mean, cond_variance)
+            % X | Q ~ N(mu_conditional, Sigma_conditional)
 
             % Conditional variance
             cond_variance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2)^-1 * Sigma(2, 1);
@@ -84,15 +84,13 @@ for j = 1:1%1:length(myFiles)
             % Conditional mean
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 2)^-1 * (a - mu(2));
 
-            % Simulate residual gas fraction in percentage
-            X_res_per_sim = normrnd(cond_mean, cond_variance);
-            % X_res_sim = exp(-.5 .* transpose(a - mu) .* inv(Sigma) .* (a - mu)) ./ sqrt((2 .* pi) .^ k .* det(Sigma));
+            % random variable
+            w
 
-            % Compare
-            figure
-            scatter(Q_gross, X_res_per); hold on
-            scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
+            
+            
 
+            X_res_sim = exp(-.5 .* transpose(a - mu) .* inv(Sigma) .* (a - mu)) ./ sqrt((2 .* pi) .^ k .* det(Sigma));
         end
     else 
         fprintf("%s\n# of Cycles: %f\n\n", filename, n_cycles);

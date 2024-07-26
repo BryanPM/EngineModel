@@ -2,8 +2,8 @@ clear all
 close all
 clc
 
-myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
-% myDir = '~/Applications/UTORII_DATA/';
+% myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+myDir = '~/Applications/UTORII_DATA/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 % Constants
@@ -19,7 +19,7 @@ i_evc = find(CA_deg == -355);
 i_evo = find(CA_deg == 160.8000);
 
 %% Loop through all files in the folder
-for j = 1:1%1:length(myFiles)
+for j = 1:length(myFiles)
 
     clear Pcyl_CA;
     clear n_cycles;
@@ -88,15 +88,20 @@ for j = 1:1%1:length(myFiles)
             X_res_per_sim = normrnd(cond_mean, cond_variance);
             % X_res_sim = exp(-.5 .* transpose(a - mu) .* inv(Sigma) .* (a - mu)) ./ sqrt((2 .* pi) .^ k .* det(Sigma));
 
+
+            fprintf("%s\n\n", filename);
             % Compare
-            figure
+            figure(k)
             scatter(Q_gross, X_res_per); hold on
             scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
             xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
-
+            figfile = append(file, ".jpg");
+            saveas(figure(k), figfile);
+            hold off
+            k = k + 1;
         end
     else 
-        fprintf("%s\n# of Cycles: %f\n\n", filename, n_cycles);
+        fprintf("Bad file: %s\n# of Cycles: %f\n\n", filename, n_cycles);
     end
 end
 

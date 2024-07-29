@@ -31,6 +31,9 @@ for j = 1:length(myFiles)
     % extract the filename for output data
     file = erase(filename, ".mat");
     ofile = append(file, "_X_res.csv");
+    fname = strrep(filename, '_', ' '); % replace _ with spaces for plot naming
+    ofname = extractAfter(fname, '20'); % throw away everything before the date
+    fname = append('20', ofname); % put the '20' back into '2024'
 
     n_cycles = length(Cylinder_1_Cycle_Data.IMEPn);
 
@@ -94,11 +97,19 @@ for j = 1:length(myFiles)
             figure(k)
             scatter(Q_gross, X_res_per); hold on
             scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
+            title(fname)
             xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
             figfile = append(file, ".jpg");
             saveas(figure(k), figfile);
             hold off
             k = k + 1;
+
+            % Q-Q plot
+            figure(k);
+            qqplot(X_res, X_res_per_sim);
+            title(fname)
+            k = k + 1;
+            hold off
         end
     else 
         fprintf("Bad file: %s\n# of Cycles: %f\n\n", filename, n_cycles);
@@ -106,6 +117,7 @@ for j = 1:length(myFiles)
 end
 
 % Combine data into a single matrix
+
 %data = [Q_gross, X_res];
 % Combine data into a single matrix
 
@@ -163,8 +175,8 @@ function plot_X_res(X_res, Gross_Heat_Release, filename, k)
     hold on
 
     plot(x, f1, '-');
-    fname = strrep(filename, '_', ' ');
-    title(fname)
+    
+    title(filename)
     xlabel("Gross Heat Release [J]");
     ylabel("X res [%]");
     hold off

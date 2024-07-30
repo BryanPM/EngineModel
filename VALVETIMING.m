@@ -2,8 +2,8 @@ clear all
 close all
 clc
 
-% myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
-myDir = '~/Applications/UTORII_DATA/';
+myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+% myDir = '~/Applications/UTORII_DATA/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 % Constants
@@ -19,7 +19,7 @@ i_evc = find(CA_deg == -355);
 i_evo = find(CA_deg == 160.8000);
 
 %% Loop through all files in the folder
-for j = 1:length(myFiles)
+for j = 1%1:length(myFiles)
 
     clear Pcyl_CA;
     clear n_cycles;
@@ -97,17 +97,30 @@ for j = 1:length(myFiles)
             figure(k)
             scatter(Q_gross, X_res_per); hold on
             scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
-            title(fname)
+            title(strrep(myFiles(j).name, '_', ' '))
             xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
-            figfile = append(file, ".jpg");
-            saveas(figure(k), figfile);
+            % figfile = append(file, ".jpg");
+            % saveas(figure(k), figfile);
             hold off
             k = k + 1;
 
             % Q-Q plot
             figure(k);
-            qqplot(X_res, X_res_per_sim);
-            title(fname)
+            qqplot(X_res*100, X_res_per_sim);
+            title(['Q-Q plot: ', strrep(myFiles(j).name, '_', ' ')])
+            xlabel('Experimental X_{res} (%)')
+            ylabel('Simulated X_{res} (%)')
+            axis equal
+            k = k + 1;
+            hold off
+
+            % Histograms
+            figure(k);
+            histogram(X_res*100); hold on
+            histogram(X_res_per_sim);
+            title(['Histogram: ', strrep(myFiles(j).name, '_', ' ')])
+            legend('experiment', 'simulation')
+            xlabel('X_{res} (%)')
             k = k + 1;
             hold off
         end

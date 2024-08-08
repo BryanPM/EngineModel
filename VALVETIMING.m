@@ -106,12 +106,12 @@ for j = 1:length(myFiles)
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 2)^-1 * (a - mu(2));
 
             % Simulate residual gas fraction in percentage
-            %X_res_per_sim = normrnd(cond_mean, cond_variance);
-            X_res_per_sim = trnd(cond_variance, size(Q_gross));
+            X_res_per_sim = normrnd(cond_mean, cond_variance);
+            %X_res_per_sim = trnd(cond_variance, size(Q_gross));
 
             fprintf("%s\n", filename);
             % Compare
-            % figure(k)
+            figure(k)
             scatter(Q_gross, X_res_per); hold on
             axis([190 1080 0 10])
             scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
@@ -123,23 +123,23 @@ for j = 1:length(myFiles)
             k = k + 1;
 
             % Q-Q plot
-            figure(k); hold on
-            qqplot(X_res, X_res_per_sim);
-            title(fname)
-            qqfile = append(file, "_qqplot.jpg");
-            saveas(figure(k), qqfile)
-            k = k + 1;
-            hold off
-
-            % Histogram
-            figure(k); hold on
-            histogram(X_res_per);
-            histogram(X_res_per_sim);
-            title(fname)
-            histofile = append(file, "_histogram.jpg");
-            saveas(figure(k), histofile)
-            hold off
-            k = k + 1;
+            % figure(k); hold on
+            % qqplot(X_res, X_res_per_sim);
+            % title(fname)
+            % qqfile = append(file, "_qqplot.jpg");
+            % saveas(figure(k), qqfile)
+            % k = k + 1;
+            % hold off
+            % 
+            % % Histogram
+            % figure(k); hold on
+            % histogram(X_res_per);
+            % histogram(X_res_per_sim);
+            % title(fname)
+            % histofile = append(file, "_histogram.jpg");
+            % saveas(figure(k), histofile)
+            % hold off
+            % k = k + 1;
 
             % Kullback-Liebler Divergence factor
            %

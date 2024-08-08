@@ -13,6 +13,10 @@ EVC = -355;
 EVO = 165;
 CA_deg = linspace(-359.8, 360, 3600);
 k = 1;
+Q_min = 10000000;
+Q_max = 0;
+X_min = 10000000;
+X_max = 0;
 
 % Valve timings
 i_evc = find(CA_deg == -355);
@@ -68,6 +72,20 @@ for j = 1:length(myFiles)
             % Residual gas fraction in percentage (%)
             X_res_per = X_res * 100;
 
+            % Find minimum and maximum for plot axes
+            % if (min(X_res_per) < X_min)
+            %     X_min = min(X_res_per);
+            % end
+            % if (max(X_res_per) > X_max)
+            %     X_max = max(X_res_per);
+            % end
+            % if (min(Q_gross) < Q_min)
+            %     Q_min = min(Q_gross);
+            % end
+            % if (max(Q_gross) > Q_max)
+            %     Q_max = max(Q_gross);
+            % end
+
             % Combine data into a single matrix
             data = [X_res_per; Q_gross]';
 
@@ -88,14 +106,14 @@ for j = 1:length(myFiles)
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 2)^-1 * (a - mu(2));
 
             % Simulate residual gas fraction in percentage
-            X_res_per_sim = normrnd(cond_mean, cond_variance);
-            % X_res_sim = exp(-.5 .* transpose(a - mu) .* inv(Sigma) .* (a - mu)) ./ sqrt((2 .* pi) .^ k .* det(Sigma));
+            %X_res_per_sim = normrnd(cond_mean, cond_variance);
+            X_res_per_sim = trnd(cond_variance, size(Q_gross));
 
-
-            fprintf("%s\n\n", filename);
+            fprintf("%s\n", filename);
             % Compare
-            figure(k)
+            % figure(k)
             scatter(Q_gross, X_res_per); hold on
+            axis([190 1080 0 10])
             scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
             title(fname)
             xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
@@ -105,20 +123,34 @@ for j = 1:length(myFiles)
             k = k + 1;
 
             % Q-Q plot
-            figure(k);
+            figure(k); hold on
             qqplot(X_res, X_res_per_sim);
             title(fname)
             qqfile = append(file, "_qqplot.jpg");
             saveas(figure(k), qqfile)
             k = k + 1;
             hold off
+
+            % Histogram
+            figure(k); hold on
+            histogram(X_res_per);
+            histogram(X_res_per_sim);
+            title(fname)
+            histofile = append(file, "_histogram.jpg");
+            saveas(figure(k), histofile)
+            hold off
+            k = k + 1;
+
+            % Kullback-Liebler Divergence factor
+           %
+            %fprintf("K-L Divergence Factor: %f\n\n", kl);
         end
     else 
         fprintf("Bad file: %s\n# of Cycles: %f\n\n", filename, n_cycles);
     end
 end
 
-% Combine data into a single matrix
+% Combine data into a fname = strrep(filename, '_', ' ');single matrix
 
 %data = [Q_gross, X_res];
 % Combine data into a single matrix

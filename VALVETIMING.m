@@ -17,6 +17,8 @@ Q_min = 10000000;
 Q_max = 0;
 X_min = 10000000;
 X_max = 0;
+v = 1;
+p_2 = 1;
 
 % Valve timings
 i_evc = find(CA_deg == -355);
@@ -55,6 +57,7 @@ for j = 1:length(myFiles)
         % fprintf("%s\nCoV of IMEP: %.2f\n\n", filename, CoV_IMEP);
         % Only look at desirable conditions
         if (Cylinder_1_Cycle_Data.Injection_1_SOI(1) <= -40)
+            fprintf("%s\n", filename);
             Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
 
             % Calculate the X_res (-)
@@ -99,28 +102,43 @@ for j = 1:length(myFiles)
             % Conditional variance
             cond_variance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2)^-1 * Sigma(2, 1);
 
+
             % Known value of Q in the conditional distribution
             a = Q_gross;
 
             % Conditional mean
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 2)^-1 * (a - mu(2));
 
+            % Square Mahalanobis distance
+            d = transpose(a - mu(2)) * Sigma(2, 2)^-1 * (a - mu(2));
+
             % Simulate residual gas fraction in percentage
             X_res_per_sim = normrnd(cond_mean, cond_variance);
-            %X_res_per_sim = trnd(cond_variance, size(Q_gross));
+            y_gauss = normrnd(0, 0);
 
-            fprintf("%s\n", filename);
-            % Compare
-            figure(k)
-            scatter(Q_gross, X_res_per); hold on
-            axis([190 1080 0 10])
-            scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
-            title(fname)
-            xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
-            figfile = append(file, "_scatter.jpg");
-            saveas(figure(k), figfile);
-            hold off
-            k = k + 1;
+            % Kullback Liebler Divergence
+            KL_div = 0;
+            for i = 1:n_cycles
+                KL_div = KL_div + X_res_per(i) * log(X_res_per(i) / X_res_per_sim(i));
+            end
+
+            fprintf("K-L Divergence Factor: %f\n\n", KL_div);
+
+            % Student's t-distribution
+            u = 1; % not sure what u is 
+            t_dist = sqrt(v / u) * y_gauss + mu;
+
+            % Plotting Comparison
+            % figure(k)
+            % scatter(Q_gross, X_res_per); hold on
+            % axis([190 1080 0 10])
+            % scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
+            % title(fname)
+            % xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
+            % figfile = append(file, "_scatter.jpg");
+            % saveas(figure(k), figfile);
+            % hold off
+            % k = k + 1;
 
             % Q-Q plot
             % figure(k); hold on
@@ -132,18 +150,15 @@ for j = 1:length(myFiles)
             % hold off
             % 
             % % Histogram
-            % figure(k); hold on
-            % histogram(X_res_per);
-            % histogram(X_res_per_sim);
-            % title(fname)
-            % histofile = append(file, "_histogram.jpg");
-            % saveas(figure(k), histofile)
-            % hold off
-            % k = k + 1;
-
-            % Kullback-Liebler Divergence factor
-           %
-            %fprintf("K-L Divergence Factor: %f\n\n", kl);
+            figure(k); hold on
+            histogram(X_res_per);
+            histogram(X_res_per_sim); legend('experiment', 'simulation')
+            title(fname)
+            histofile = append(file, "_histogram.jpg");
+            saveas(figure(k), histofile)
+            hold off
+            k = k + 1;
+           
         end
     else 
         fprintf("Bad file: %s\n# of Cycles: %f\n\n", filename, n_cycles);

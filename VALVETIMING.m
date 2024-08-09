@@ -17,7 +17,7 @@ Q_min = 10000000;
 Q_max = 0;
 X_min = 10000000;
 X_max = 0;
-v = 1;
+nu = 1;
 p_2 = 1;
 
 % Valve timings
@@ -102,11 +102,10 @@ for j = 1:length(myFiles)
             % Conditional variance
             cond_variance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2)^-1 * Sigma(2, 1);
 
-
             % Known value of Q in the conditional distribution
             a = Q_gross;
 
-            % Conditional mean
+            % Gaussian Conditional mean
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 2)^-1 * (a - mu(2));
 
             % Square Mahalanobis distance
@@ -124,9 +123,12 @@ for j = 1:length(myFiles)
 
             fprintf("K-L Divergence Factor: %f\n\n", KL_div);
 
+            % Conditional nu
+            nu_conditional = nu + 1;
+
             % Student's t-distribution
-            u = 1; % not sure what u is 
-            t_dist = sqrt(v / u) * y_gauss + mu;
+            u = chi2rnd(nu_conditional);
+            t_dist = sqrt(nu / u) * y_gauss + mu;
 
             % Plotting Comparison
             % figure(k)

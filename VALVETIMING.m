@@ -25,7 +25,7 @@ i_evc = find(CA_deg == -355);
 i_evo = find(CA_deg == 160.8000);
 
 %% Loop through all files in the folder
-for j = 1:length(myFiles)
+for j = 1%1:length(myFiles)
 
     clear Pcyl_CA;
     clear n_cycles;
@@ -124,9 +124,12 @@ for j = 1:length(myFiles)
             fprintf("K-L Divergence Factor: %f\n\n", KL_div);
 
             % Conditional nu
-            nu_conditional = nu + 1;
+            nu_conditional = nu + 1; % currently just 2
 
             % Student's t-distribution
+
+            psi = ((nu_conditional + d) / (nu_conditional + p_2)) * cond_variance;
+
             u = chi2rnd(nu_conditional);
             t_dist = sqrt(nu / u) * y_gauss + mu;
 
@@ -152,14 +155,14 @@ for j = 1:length(myFiles)
             % hold off
             % 
             % % Histogram
-            figure(k); hold on
-            histogram(X_res_per);
-            histogram(X_res_per_sim); legend('experiment', 'simulation')
-            title(fname)
-            histofile = append(file, "_histogram.jpg");
-            saveas(figure(k), histofile)
-            hold off
-            k = k + 1;
+            % figure(k); hold on
+            % histogram(X_res_per);
+            % histogram(X_res_per_sim); legend('experiment', 'simulation')
+            % title(fname)
+            % histofile = append(file, "_histogram.jpg");
+            % saveas(figure(k), histofile)
+            % hold off
+            % k = k + 1;
            
         end
     else 

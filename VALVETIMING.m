@@ -3,8 +3,8 @@ close all
 clc
 
 % myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
-myDir = '~/Applications/UTORII_DATA/';
-myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
+% myDir = '~/Applications/UTORII_DATA/';
+% myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 % Constants
 Pmax = 11; % MPa
@@ -31,7 +31,7 @@ for j = 1%1:length(myFiles)
     clear n_cycles;
 
     % Load the file
-    filename = [myDir, myFiles(j).name];
+    filename = '/MATLAB Drive/ORNL Engine/20240305_1200_DI8_2_SOI42_PFI8_5_024.mat'; %[myDir, myFiles(j).name];
     load(filename)
 
     % extract the filename for output data
@@ -100,20 +100,22 @@ for j = 1%1:length(myFiles)
             % X | Q = a ~ N(cond_mean, cond_variance)
 
             % Conditional variance
-            cond_variance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2)^-1 * Sigma(2, 1);
+            cond_covariance = Sigma(1, 1) - Sigma(1, 2) * Sigma(2, 2)^-1 * Sigma(2, 1);
 
             % Known value of Q in the conditional distribution
             a = Q_gross;
+            sz = size(a);
 
             % Gaussian Conditional mean
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 2)^-1 * (a - mu(2));
 
             % Square Mahalanobis distance
-            d = transpose(a - mu(2)) * Sigma(2, 2)^-1 * (a - mu(2));
+            s = transpose(a - mu(2));
+            d = s .* Sigma(2, 2)^-1 .* (a - mu(2));
 
             % Simulate residual gas fraction in percentage
-            X_res_per_sim = normrnd(cond_mean, cond_variance);
-            y_gauss = normrnd(0, 0);
+            X_res_per_sim = normrnd(cond_mean, cond_covariance);
+            y = zeros(1, sz(2)) .* normrnd(0, cond_covariance);
 
             % Kullback Liebler Divergence
             KL_div = 0;
@@ -127,11 +129,10 @@ for j = 1%1:length(myFiles)
             nu_conditional = nu + 1; % currently just 2
 
             % Student's t-distribution
-
-            psi = ((nu_conditional + d) / (nu_conditional + p_2)) * cond_variance;
+            psi = ((nu_conditional + d) / (nu_conditional + p_2)) * cond_covariance;
 
             u = chi2rnd(nu_conditional);
-            t_dist = sqrt(nu / u) * y_gauss + mu;
+            t_dist = y ./ sqrt(psi ./ u) + mu;
 
             % Plotting Comparison
             % figure(k)

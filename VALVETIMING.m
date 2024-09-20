@@ -31,7 +31,7 @@ for j = 1%1:length(myFiles)
     clear n_cycles;
 
     % Load the file
-    filename = '/MATLAB Drive/ORNL Engine/20240305_1200_DI8_2_SOI42_PFI8_5_024.mat'; %[myDir, myFiles(j).name];
+    filename = '/MATLAB Drive/ORNL Engine/20240305_1200_DI8_6_SOI42_PFI8_5_022.mat'; %[myDir, myFiles(j).name];
     load(filename)
 
     % extract the filename for output data
@@ -110,12 +110,11 @@ for j = 1%1:length(myFiles)
             cond_mean = mu(1) + Sigma(1, 2) * Sigma(2, 2)^-1 * (a - mu(2));
 
             % Square Mahalanobis distance
-            s = transpose(a - mu(2));
-            d = s .* Sigma(2, 2)^-1 .* (a - mu(2));
+            d = (a - mu(2)) * transpose(a - mu(2)) * Sigma(2, 2)^-1;
 
             % Simulate residual gas fraction in percentage
             X_res_per_sim = normrnd(cond_mean, cond_covariance);
-            y = zeros(1, sz(2)) .* normrnd(0, cond_covariance);
+            y = zeros(size(a)) .* normrnd(0, cond_covariance);
 
             % Kullback Liebler Divergence
             KL_div = 0;
@@ -132,19 +131,19 @@ for j = 1%1:length(myFiles)
             psi = ((nu_conditional + d) / (nu_conditional + p_2)) * cond_covariance;
 
             u = chi2rnd(nu_conditional);
-            t_dist = y ./ sqrt(psi ./ u) + mu;
+            t_dist = y ./ sqrt(psi ./ u) + mu(2);
 
             % Plotting Comparison
-            % figure(k)
-            % scatter(Q_gross, X_res_per); hold on
-            % axis([190 1080 0 10])
-            % scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
-            % title(fname)
-            % xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
-            % figfile = append(file, "_scatter.jpg");
-            % saveas(figure(k), figfile);
-            % hold off
-            % k = k + 1;
+            figure(k)
+            scatter(Q_gross,X_res_per); hold on
+            axis([190 1080 0 10])
+            scatter(Q_gross, t_dist / 100, 'Color', 'red'); legend('experiment', 'simulation')
+            title(fname)
+            xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
+            figfile = append(file, "_scatter.jpg");
+            saveas(figure(k), figfile);
+            hold off
+            k = k + 1;
 
             % Q-Q plot
             % figure(k); hold on

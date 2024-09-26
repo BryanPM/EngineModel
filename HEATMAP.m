@@ -64,8 +64,8 @@ figure(1); clf; hold on
 contourf(DI_Q, DI_SOI, Ammonia_spline,85:95,'linestyle','none'); clim([85 95]); colorbar;
 plot(DI_quantity, DI_timing,'o','markersize',6,'MarkerFaceColor',0.7*[1 1 1],'MarkerEdgeColor','b');
 contour(DI_Q, DI_SOI, CoV_IMEP_spline, [0:3:21 2],':k','linewidth',2,'showtext','on');
-contour(DI_Q, DI_SOI, CA50_spline, [8 8],'-k','linewidth',2);
-legend('Ammonia content (%)', 'Data points', 'CoV IMEP(%)','CA50 = 8 [CA deg]','location','southeast')
-xlabel('Injection Quantity (mg)');
-ylabel('Injection timing (deg bTDC)');
-hold off
+contour(DI_Q, DI_SOI, CA50_spline, 7.4*[1 1],'-k','linewidth',2);
+legend('Ammonia content (%)', 'Data points', 'CoV IMEP(%)','CA50 = 7.5 [CA deg]','location','southeast')
+xlabel('Diesel Injection Quantity (mg)');
+ylabel('Diesel Injection timing (deg bTDC)');
+box on; hold off

@@ -1,18 +1,21 @@
 %% Tabula rasa
 clear all
-close all
 clc
 
 %% Load data
 myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
-% for i = 1:length(myFiles)
-i=24;
+for i = 1:length(myFiles)
+close all
 
 % Load files
-baseName = myFiles(i).name;
-load([myDir, baseName]);
+fileName = myFiles(i).name;
+load([myDir, fileName]);
+
+% Get file name without extension
+baseName = erase(fileName, ".mat");
+baseName = baseName(15:end-10);
 
 %% Estimate fuel quantity
 
@@ -30,10 +33,10 @@ original_size = length(DI_quantity);
 % Create a new index for the resized signal with n_cycles
 new_index = linspace(1, original_size, n_cycles);
 % Use interp1 to interpolate the signal to the new index
-DI_quantity_c = interp1(1:original_size, DI_quantity, new_index);
+DI_quantity_c = interp1(1:original_size, DI_quantity, new_index)';
 
 % Introduce diesel injector variability
-DI_duration = Cylinder_1_Cycle_Data.Injection_1_Duration;
+DI_duration = Cylinder_1_Cycle_Data.Injection_1_Duration';
 DI_quantity_c2c = (DI_duration / median(DI_duration)) .^ (1/2) .* DI_quantity_c;
 
 % Ammonia fuel mass per cycle (Kg)
@@ -43,7 +46,7 @@ original_size = length(PI_quantity);
 % Create a new index for the resized signal with n_cycles
 new_index = linspace(1, original_size, n_cycles);
 % Use interp1 to interpolate the signal to the new index
-PI_quantity_c2c = interp1(1:original_size, PI_quantity, new_index);
+PI_quantity_c2c = interp1(1:original_size, PI_quantity, new_index)';
 
 %% Estimate residual gas fraction
 
@@ -56,28 +59,32 @@ gamma = 1.3;
 CA_deg = linspace(-359.8, 360, 3600);
 
 % Cylinder pressure (Pa)
-Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
+if length(Cylinder_1_Synch_Data.Cylinder_Pressure)/3600 == n_cycles
+    Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure, [3600, n_cycles]) * 10 ^ -3;
+else
+    Pcyl_CA = reshape(Cylinder_1_Synch_Data.Cylinder_Pressure(1:end-3600), [3600, n_cycles]) * 10 ^ -3;
+end
 
 % Valve timings
 i_evc = find(CA_deg == -355);
 i_evo = find(CA_deg == 160.8000);
 
 % Calculate the X_res (-)
-X_res = zeros([1, n_cycles]);
+X_res = zeros(n_cycles, 1);
 for i = 1:n_cycles
     X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
 end
 
 %% Estimate combustion efficiency
 
-% Estimate combined Q_LHV
-Q_LHV_mix = (DI_quantity_c2c * Q_LHV_diesel + PI_quantity_c2c * Q_LHV_ammonia) ./ (DI_quantity_c2c + PI_quantity_c2c);
+% Potential heat release
+Q_potential = DI_quantity_c2c * Q_LHV_diesel + PI_quantity_c2c * Q_LHV_ammonia;
 
 % Gross heat release (J)
-Q_gross = Cylinder_1_Cycle_Data.Gross_Heat_Release;
+Q_gross = Cylinder_1_Cycle_Data.Gross_Heat_Release';
 
 % Estimated combustion efficiency
-eta_c = (1 - X_res) ./ ((DI_quantity_c2c + PI_quantity_c2c) .* Q_LHV_mix ./ Q_gross - X_res);
+eta_c = (1 - X_res) ./ (Q_potential ./ Q_gross - X_res);
 
 % Measured combustion efficiency
 eta_c_mea = LowSpeed.Combustion_Efficiency / 100;
@@ -88,11 +95,11 @@ new_index = linspace(1, original_size, n_cycles);
 % Use interp1 to interpolate the signal to the new index
 eta_c_mea_c2c = interp1(1:original_size, eta_c_mea, new_index);
 
-figure; hold on
-plot(eta_c)
-plot(eta_c_mea_c2c, 'LineWidth', 2)
-ylabel('Combustion efficiency')
-legend('Estimated', 'Measured')
+figure; hold on; box on;
+plot(eta_c);
+plot(eta_c_mea_c2c, 'LineWidth', 2); legend('Estimated', 'Measured');
+ylabel('Combustion efficiency'); xlabel('Cycle')
+print(['Model_Plots/', baseName, 'eta_c'], '-dpng', '-r300');
 
 %% Estimate in-cylinder mass
 
@@ -103,17 +110,18 @@ original_size = length(Air_quantity);
 % Create a new index for the resized signal with n_cycles
 new_index = linspace(1, original_size, n_cycles);
 % Use interp1 to interpolate the signal to the new index
-Air_quantity_c2c = interp1(1:original_size, Air_quantity, new_index);
+Air_quantity_c2c = interp1(1:original_size, Air_quantity, new_index)';
 
 % Initialize variables
 M_fuel = zeros(n_cycles,1);
 M_air = zeros(n_cycles,1);
-Q_gross_model = zeros(n_cycles,1);
+
+% LHV for mix
+Q_LHV_mix = (DI_quantity_c2c(1) * Q_LHV_diesel + PI_quantity_c2c(1) * Q_LHV_ammonia) ./ (DI_quantity_c2c(1) + PI_quantity_c2c(1));
 
 % Initial condition
-M_fuel(1) = ((DI_quantity_c2c(1) + PI_quantity_c2c(1)) - X_res(1) * Q_gross(1) / Q_LHV_mix(1)) / (1 - X_res(1));
-M_air(1) = (Air_quantity_c2c(1) + X_res(1) * Q_gross(1) / Q_LHV_mix(1)) / (1 - X_res(1));
-Q_gross_model(1) = eta_c(1) * M_fuel(1) * Q_LHV_mix(1);
+M_fuel(1) = ((DI_quantity_c2c(1) + PI_quantity_c2c(1)) - X_res(1) * Q_gross(1) / Q_LHV_mix) / (1 - X_res(1));
+M_air(1) = (Air_quantity_c2c(1) + X_res(1) * Q_gross(1) / Q_LHV_mix) / (1 - X_res(1));
 
 % Propagate system forward
 for i = 1:n_cycles-1
@@ -124,39 +132,44 @@ for i = 1:n_cycles-1
 
     M_fuel(i+1) = next_state(1);
     M_air(i+1) = next_state(2);
-    Q_gross_model(i+1) = eta_c(i+1) * M_fuel(i+1) * Q_LHV_mix(i+1);
 end
 
-figure; plot(M_fuel)
-figure; plot(M_air)
-figure; hold on; plot(Q_gross_model), plot(Q_gross)
+figure
+subplot(2,1,1); plot(M_fuel*1e6); ylabel('In-cylinder fuel estimate (mg)')
+subplot(2,1,2); plot(M_air*1e6); ylabel('In-cylinder air estimate (mg)')
+xlabel('Cycles');
+print(['Model_Plots/', baseName, 'Mass'], '-dpng', '-r300');
 
 %% Residual gas fraction as function of Q_gross
 
 % Residual gas fraction in percentage (%)
-X_res_per = X_res' * 100;
+X_res_per = X_res * 100;
 
 % Estimate the mean and covariance matrix
-X_res_mu    = mean([X_res_per, Q_gross']);
-X_res_Sigma = cov([X_res_per, Q_gross']);
+X_res_mu    = mean([X_res_per, Q_gross]);
+X_res_Sigma = cov([X_res_per, Q_gross]);
 
 % Conditional Gaussian
-X_res_per_sim = conditional_Gauss(X_res_mu, X_res_Sigma, Q_gross');
+X_res_per_model = conditional_Gauss(X_res_mu, X_res_Sigma, Q_gross);
 
-figure; hold on
+figure
+subplot(2,1,1); hold on; box on
 scatter(Q_gross, X_res_per); hold on
-scatter(Q_gross, X_res_per_sim); legend('experiment', 'simulation')
+scatter(Q_gross, X_res_per_model); legend('Experimental', 'Conditional Gaussian')
 xlabel('Q_{Gross} (J)'); ylabel('X_{res} (%)')
 
-figure; hold on
+subplot(2,1,2); hold on; box on
 histogram(X_res_per, "Normalization", "pdf");
-histogram(X_res_per_sim, "Normalization", "pdf"); legend('experiment', 'simulation')
+histogram(X_res_per_model, "Normalization", "pdf");
+legend('Experimental', 'Conditional Gaussian')
 xlabel('X_{res} (%)'); ylabel('PDF')
+
+print(['Model_Plots/', baseName, 'X_res_model'], '-dpng', '-r300');
 
 %% Combustion Efficiency as function of AFR
 
 % Combustion efficiency in percentage (%)
-eta_c_per = eta_c' * 100;
+eta_c_per = eta_c * 100;
 
 % State
 Mass_mg = [M_fuel, M_air] * 1e6; 
@@ -166,19 +179,23 @@ eta_c_mu    = mean([eta_c_per, Mass_mg]);
 eta_c_Sigma = cov([eta_c_per,Mass_mg]);
 
 % Conditional Gaussian
-eta_c_per_sim = conditional_Gauss(eta_c_mu, eta_c_Sigma, Mass_mg);
+eta_c_per_model = conditional_Gauss(eta_c_mu, eta_c_Sigma, Mass_mg);
 
-figure; hold on
+figure
+subplot(2,1,1); hold on; box on
 scatter(M_air./M_fuel, eta_c_per); ylim([0, 100]);
-scatter(M_air./M_fuel, eta_c_per_sim); legend('experiment', 'simulation')
-xlabel('Air-to-Fuel Ratio (-)'); ylabel('\eta_{c} (%)')
+scatter(M_air./M_fuel, eta_c_per_model); legend('Experimental', 'Conditional Gaussian')
+xlabel('Air-to-Fuel Ratio (-)'); ylabel('Combustion Efficiency (%)')
 
-figure; hold on
+subplot(2,1,2); hold on; box on
 histogram(eta_c_per, "Normalization", "pdf")
-histogram(eta_c_per_sim, "Normalization", "pdf"); legend('experiment', 'simulation')
-xlabel('\eta_{c} (%)'); ylabel('PDF')
+histogram(eta_c_per_model, "Normalization", "pdf");
+legend('Experimental', 'Conditional Gaussian')
+xlabel('Combustion Efficiency (%)'); ylabel('PDF')
 
-%% Simluate entire file
+print(['Model_Plots/', baseName, 'eta_c_model'], '-dpng', '-r300');
+
+%% Simulate dynamic system
 
 % Initialize variables
 M_fuel_sim = zeros(n_cycles,1);
@@ -191,6 +208,11 @@ Q_gross_sim = zeros(n_cycles,1);
 M_fuel_sim(1) = M_fuel(1);
 M_air_sim(1) = M_air(1);
 
+% Inputs
+Diesel_fuel = DI_quantity_c2c;
+Ammonia_fuel = PI_quantity_c2c;
+Fresh_air = Air_quantity_c2c;
+
 for i = 1:n_cycles
     
     % State
@@ -199,8 +221,11 @@ for i = 1:n_cycles
     % Combustion efficiency
     eta_c_sim(i) = conditional_Gauss(eta_c_mu, eta_c_Sigma, state'*1e6) / 100;
     
+    % Effective LHV
+    Q_LHV_eff = (Diesel_fuel(i) * Q_LHV_diesel + Ammonia_fuel(i) * Q_LHV_ammonia) ./ (Diesel_fuel(i) + Ammonia_fuel(i));
+
     % Gross heat release
-    Q_gross_sim(i) = eta_c_sim(i) * M_fuel_sim(i) * Q_LHV_mix(i);
+    Q_gross_sim(i) = eta_c_sim(i) * M_fuel_sim(i) * Q_LHV_eff;
 
     % Residual gas fraction
     X_res_sim(i) = conditional_Gauss(X_res_mu, X_res_Sigma, Q_gross_sim(i)) / 100;
@@ -209,7 +234,7 @@ for i = 1:n_cycles
     Matrix_res = X_res_sim(i) * [1 - eta_c_sim(i), 0; eta_c_sim(i), 1];
 
     % Fresh fuel and air
-    input = [DI_quantity_c2c(i) + PI_quantity_c2c(i); Air_quantity_c2c(i)];
+    input = [Diesel_fuel(i) + Ammonia_fuel(i); Fresh_air(i)];
 
     if i < n_cycles
         % Calculate next cycle
@@ -219,21 +244,66 @@ for i = 1:n_cycles
     end
 end
 
-figure; hold on
-histogram(Q_gross, "Normalization", "pdf")
-histogram(Q_gross_sim, "Normalization", "pdf"); legend('experiment', 'simulation')
-xlabel('Q_{Gross} (J)'); ylabel('PDF')
+% Fix initial condition
+M_fuel_sim(1) = M_fuel_sim(2);
+M_air_sim(1) = M_air_sim(2);
 
-figure; hold on
-histogram(X_res, "Normalization", "pdf")
-histogram(X_res_sim, "Normalization", "pdf"); legend('experiment', 'simulation')
-xlabel('X_{res} (-)'); ylabel('PDF')
+figure
+subplot(4,2,1); hold on; box on;
+plot(M_fuel*1e6); plot(M_fuel_sim*1e6); ylabel('M_{fuel} (mg)');
+xLimits = ylim; title('Timeseries')
+subplot(4,2,2); hold on; box on; xlim(xLimits)
+histogram(M_fuel*1e6, "Normalization", "pdf")
+histogram(M_fuel_sim*1e6, "Normalization", "pdf");
+legend('Data', 'Simulator','Location','eastoutside')
+view(90, 90); set(gca, 'XDir', 'reverse'); title('PDF')
+
+subplot(4,2,3); hold on; box on;
+plot(M_air*1e6); plot(M_air_sim*1e6); ylabel('M_{air} (mg)'); xLimits = ylim;
+subplot(4,2,4); hold on; box on; xlim(xLimits)
+histogram(M_air*1e6, "Normalization", "pdf")
+histogram(M_air_sim*1e6, "Normalization", "pdf");
+legend('Data', 'Simulator','Location','eastoutside')
+view(90, 90); set(gca, 'XDir', 'reverse');
+
+subplot(4,2,5); hold on; box on;
+plot(Q_gross); plot(Q_gross_sim); ylabel('Q_{gross} (J)'); xLimits = ylim;
+subplot(4,2,6); hold on; box on; xlim(xLimits)
+histogram(Q_gross, "Normalization", "pdf")
+histogram(Q_gross_sim, "Normalization", "pdf");
+legend('Data', 'Simulator','Location','eastoutside')
+view(90, 90); set(gca, 'XDir', 'reverse');
+
+subplot(4,2,7); hold on; box on;
+plot(X_res*100); plot(X_res_sim*100); ylabel('X_{res} (%)'); xLimits = ylim;
+subplot(4,2,8); hold on; box on; xlim(xLimits)
+histogram(X_res*100, "Normalization", "pdf")
+histogram(X_res_sim*100, "Normalization", "pdf");
+legend('Data', 'Simulator','Location','eastoutside')
+view(90, 90); set(gca, 'XDir', 'reverse');
+
+print(['Model_Plots/', baseName, 'Simulator'], '-dpng', '-r300');
 
 %% Combustion phasing
 
-CA50 = Cylinder_1_Cycle_Data.CA50;
-DI_timing = Cylinder_1_Cycle_Data.Injection_1_SOI;
+CA50 = Cylinder_1_Cycle_Data.CA50';
+DI_timing = Cylinder_1_Cycle_Data.Injection_1_SOI';
 
+%% Desired operating conditions
+
+DI_quantity_des = mean(LowSpeed.Pilot_1_Injection_Quantity);
+DI_timing_des = -mean(Cylinder_1_Cycle_Data.Injection_1_SOI);
+
+%% Safe file
+
+model_data = table(M_fuel_sim, M_air_sim, eta_c, Q_gross, X_res, Diesel_fuel, ...
+    Ammonia_fuel, Fresh_air, CA50, -DI_timing, DI_duration);
+writetable(model_data, ['Model_Data/', baseName, 'Data.csv']);
+save(['Model_Data/', baseName, 'Parameters.mat'], 'Q_LHV_diesel', ...
+    'Q_LHV_ammonia', 'eta_c_mu', 'eta_c_Sigma', 'X_res_mu', 'X_res_Sigma', ...
+    'DI_quantity_des', 'DI_timing_des');
+
+end
 %% Auxiliary functions
 
 function x1_sim = conditional_Gauss(mu, Sigma, x2)
@@ -250,54 +320,3 @@ mu_cond = mu(1) + Sigma(1, 2:end) * Sigma(2:end, 2:end)^-1 * (x2 - mu(2:end))';
 % Simulate residual gas fraction in percentage
 x1_sim = normrnd(mu_cond, sigma_cond);
 end
-
-% function [x1_sim, mu_cond, sigma_cond] = estimate_PDF(x1, x2, dist, dof)
-% 
-% % Combine data into a single matrix
-% data = [x1, x2];
-% 
-% % Estimate the mean and covariance matrix
-% mu = mean(data);
-% Sigma = cov(data);
-% 
-% if dist == "Gauss"
-%     [x1_sim, mu_cond, sigma_cond] = conditional_Gauss(mu, Sigma, x2);
-% elseif dist == "t"
-%     x1_sim = conditional_t(dof, mu, Sigma, x2);
-% end
-% end
-
-% function x1_sim = conditional_t(dof, mu, Sigma, x2)
-% 
-% % Conditional t-distribution
-% % x1 | x2 ~ t_nu(mu_cond, sigma_cond)
-% 
-% % Size of condiitonal variance
-% p2 = size(x2,2);
-% 
-% % Conditional degrees of freedom
-% nu_cond = dof + p2;
-% 
-% % Conditional mean
-% mu_cond = mu(1) + Sigma(1, 2:end) * Sigma(2:end, 2:end)^-1 * (x2 - mu(2:end))';
-% 
-% % Conditional Gaussian variance
-% sigma_cond_Gauss = Sigma(1, 1) - Sigma(1, 2:end) * Sigma(2:end, 2:end)^-1 * Sigma(2:end, 1);
-% 
-% % Squared Mahalanobis distance
-% % d2 = (x2 - mu(2:end)) * Sigma(2:end, 2:end)^-1 * (x2 - mu(2:end))';
-% d2 = dot(x2 - mu(2:end), (x2 - mu(2:end)) * Sigma(2:end, 2:end)^-1, 2);
-% 
-% % Conditional t-distribution standard deviation
-% sigma_cond = sqrt((dof + d2) / nu_cond * sigma_cond_Gauss);
-% 
-% % Simulate Gaussian component
-% y = normrnd(0, sigma_cond);
-% 
-% % Simulate chi-squared component
-% u = chi2rnd(nu_cond, length(y), 1);
-% 
-% % Simulate residual gas fraction in percentage
-% x1_sim = y ./ sqrt(u/nu_cond) + mu_cond';
-% 
-% end

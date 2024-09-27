@@ -210,3 +210,54 @@ for j = 1%1:length(myFiles)
         fprintf("Bad file: %s\n# of Cycles: %f\n\n", filename, n_cycles);
     end
 end
+
+% function [x1_sim, mu_cond, sigma_cond] = estimate_PDF(x1, x2, dist, dof)
+% 
+% % Combine data into a single matrix
+% data = [x1, x2];
+% 
+% % Estimate the mean and covariance matrix
+% mu = mean(data);
+% Sigma = cov(data);
+% 
+% if dist == "Gauss"
+%     [x1_sim, mu_cond, sigma_cond] = conditional_Gauss(mu, Sigma, x2);
+% elseif dist == "t"
+%     x1_sim = conditional_t(dof, mu, Sigma, x2);
+% end
+% end
+
+% function x1_sim = conditional_t(dof, mu, Sigma, x2)
+% 
+% % Conditional t-distribution
+% % x1 | x2 ~ t_nu(mu_cond, sigma_cond)
+% 
+% % Size of condiitonal variance
+% p2 = size(x2,2);
+% 
+% % Conditional degrees of freedom
+% nu_cond = dof + p2;
+% 
+% % Conditional mean
+% mu_cond = mu(1) + Sigma(1, 2:end) * Sigma(2:end, 2:end)^-1 * (x2 - mu(2:end))';
+% 
+% % Conditional Gaussian variance
+% sigma_cond_Gauss = Sigma(1, 1) - Sigma(1, 2:end) * Sigma(2:end, 2:end)^-1 * Sigma(2:end, 1);
+% 
+% % Squared Mahalanobis distance
+% % d2 = (x2 - mu(2:end)) * Sigma(2:end, 2:end)^-1 * (x2 - mu(2:end))';
+% d2 = dot(x2 - mu(2:end), (x2 - mu(2:end)) * Sigma(2:end, 2:end)^-1, 2);
+% 
+% % Conditional t-distribution standard deviation
+% sigma_cond = sqrt((dof + d2) / nu_cond * sigma_cond_Gauss);
+% 
+% % Simulate Gaussian component
+% y = normrnd(0, sigma_cond);
+% 
+% % Simulate chi-squared component
+% u = chi2rnd(nu_cond, length(y), 1);
+% 
+% % Simulate residual gas fraction in percentage
+% x1_sim = y ./ sqrt(u/nu_cond) + mu_cond';
+% 
+% end

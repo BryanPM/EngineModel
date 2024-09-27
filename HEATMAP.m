@@ -61,11 +61,13 @@ Ammonia_spline = Ammonia_m(DI_Q, DI_SOI);
 %% Plot results
 
 figure(1); clf; hold on
-contourf(DI_Q, DI_SOI, Ammonia_spline,85:95,'linestyle','none'); clim([85 95]); colorbar;
+% contourf(DI_Q, DI_SOI, Ammonia_spline,85:95,'linestyle','none'); clim([85 95]); colorbar;
+contourf(DI_Q, DI_SOI, CoV_IMEP_spline, [0:3:21 2],'showtext','on');
 plot(DI_quantity, DI_timing,'o','markersize',6,'MarkerFaceColor',0.7*[1 1 1],'MarkerEdgeColor','b');
-contour(DI_Q, DI_SOI, CoV_IMEP_spline, [0:3:21 2],':k','linewidth',2,'showtext','on');
 contour(DI_Q, DI_SOI, CA50_spline, 7.4*[1 1],'-k','linewidth',2);
-legend('Ammonia content (%)', 'Data points', 'CoV IMEP(%)','CA50 = 7.5 [CA deg]','location','southeast')
+legend('CoV IMEP(%)', 'Data points', 'CA50 = 7.5 [CA deg]','location','southeast')
 xlabel('Diesel Injection Quantity (mg)');
 ylabel('Diesel Injection timing (deg bTDC)');
-box on; hold off
+title('Experimental Conditions'); box on; hold off
+
+print('Model_Plots/Overview', '-dpng', '-r600');

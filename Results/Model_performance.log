@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.30)  27 SEP 2024 17:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.12)  29 SEP 2024 19:32
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -3990,25 +3990,25 @@ Package pdftex.def Info: figs/slide_frame.png  used on input line 180.
 
  <../Model_Plots/mu_CA50.png (PNG copy)> <../Model_Plots/Sigma_CA50.png (PNG co
 py)>]
-<../Model_Plots/Q_gross_comparison.png, id=950, 1927.2pt x 401.5803pt>
+<../Model_Plots/Q_gross_comparison.png, id=950, 1716.4125pt x 401.5803pt>
 File: ../Model_Plots/Q_gross_comparison.png Graphic file (type png)
 <use ../Model_Plots/Q_gross_comparison.png>
 Package pdftex.def Info: ../Model_Plots/Q_gross_comparison.png  used on input l
-ine 188.
-(pdftex.def)             Requested size: 398.3386pt x 101.50392pt.
-<../Model_Plots/CA50_comparison.png, id=952, 1927.2pt x 401.5803pt>
+ine 189.
+(pdftex.def)             Requested size: 398.3386pt x 113.02383pt.
+<../Model_Plots/CA50_comparison.png, id=952, 1716.4125pt x 401.5803pt>
 File: ../Model_Plots/CA50_comparison.png Graphic file (type png)
 <use ../Model_Plots/CA50_comparison.png>
 Package pdftex.def Info: ../Model_Plots/CA50_comparison.png  used on input line
- 188.
-(pdftex.def)             Requested size: 398.3386pt x 101.50392pt.
+ 189.
+(pdftex.def)             Requested size: 398.3386pt x 113.02383pt.
 
-Overfull \vbox (11.26137pt too high) detected at line 188
+Overfull \vbox (24.80122pt too high) detected at line 189
  []
 
 File: figs/slide_frame.png Graphic file (type png)
 <use figs/slide_frame.png>
-Package pdftex.def Info: figs/slide_frame.png  used on input line 188.
+Package pdftex.def Info: figs/slide_frame.png  used on input line 189.
 (pdftex.def)             Requested size: 455.24408pt x 256.08809pt.
 [134
 
@@ -4054,7 +4054,7 @@ al/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr
 /local/texlive/2024/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/local/
 texlive/2024/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/local/texlive
 /2024/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on Model_performance.pdf (134 pages, 53243397 bytes).
+Output written on Model_performance.pdf (134 pages, 54048861 bytes).
 PDF statistics:
  1087 PDF objects out of 1200 (max. 8388607)
  675 compressed objects within 7 object streams

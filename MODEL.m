@@ -10,7 +10,7 @@ for i = 1:length(myFiles)
 close all
 
 % Load files
-fileName = myFiles(i).name;
+fileName = myFiles(i).name; 
 load([myDir, fileName]);
 
 % Get file name without extension
@@ -26,18 +26,27 @@ n_cycles = length(Cylinder_1_Cycle_Data.IMEPn);
 Q_LHV_diesel  = 44.1 * 1e6;
 Q_LHV_ammonia = 18.6 * 1e6;
 
+% % Diesel fuel mass per cycle (Kg)
+% DI_quantity = 2 * LowSpeed.ISB_Fuel_Flow ./ LowSpeed.Speed * 1e-3;
+% % Get the size of the original signal
+% original_size = length(DI_quantity);
+% % Create a new index for the resized signal with n_cycles
+% new_index = linspace(1, original_size, n_cycles);
+% % Use interp1 to interpolate the signal to the new index
+% DI_quantity_c = interp1(1:original_size, DI_quantity, new_index)';
+% 
+% % Introduce diesel injector variability
+DI_duration = Cylinder_1_Cycle_Data.Injection_1_Duration';
+% DI_quantity_c2c = (DI_duration / median(DI_duration)) .^ (1/2) .* DI_quantity_c;
+
 % Diesel fuel mass per cycle (Kg)
-DI_quantity = 2 * LowSpeed.ISB_Fuel_Flow ./ LowSpeed.Speed * 1e-3;
+DI_quantity = LowSpeed.Pilot_1_Injection_Quantity * 1e-6;
 % Get the size of the original signal
 original_size = length(DI_quantity);
 % Create a new index for the resized signal with n_cycles
 new_index = linspace(1, original_size, n_cycles);
 % Use interp1 to interpolate the signal to the new index
-DI_quantity_c = interp1(1:original_size, DI_quantity, new_index)';
-
-% Introduce diesel injector variability
-DI_duration = Cylinder_1_Cycle_Data.Injection_1_Duration';
-DI_quantity_c2c = (DI_duration / median(DI_duration)) .^ (1/2) .* DI_quantity_c;
+DI_quantity_c2c = interp1(1:original_size, DI_quantity, new_index)';
 
 % Ammonia fuel mass per cycle (Kg)
 PI_quantity = 2 * LowSpeed.ISB_Fuel_Flow_PFI ./ LowSpeed.Speed * 1e-3;

@@ -113,18 +113,18 @@ VARTITLE = {'E[\eta_c] (%)'; 'E[M_{fuel}] (mg)'; 'E[M_{air}] (mg)';
 
 % Refine sampling
 n_points = 100;
-% [X, Y] = meshgrid(linspace(0.9*min(DI_qty_des), 1.1*max(DI_qty_des), n_points), ...
-%                  linspace(0.9*min(DI_SOI_des), 1.1*max(DI_SOI_des), n_points+1));
-[X, Y] = meshgrid(linspace(0.85*min(m_diesel_mean)*1e6, 1.15*max(m_diesel_mean)*1e6, n_points), ...
-                  linspace(0.85*min(DI_SOI_mean), 1.15*max(DI_SOI_mean), n_points+1));
+[X, Y] = meshgrid(linspace(0.9*min(DI_qty_des), 1.1*max(DI_qty_des), n_points), ...
+                  linspace(0.9*min(DI_SOI_des), 1.1*max(DI_SOI_des), n_points+1));
+% [X, Y] = meshgrid(linspace(0.85*min(m_diesel_mean)*1e6, 1.15*max(m_diesel_mean)*1e6, n_points), ...
+%                   linspace(0.85*min(DI_SOI_mean), 1.15*max(DI_SOI_mean), n_points+1));
 writematrix(X, 'Model_Data/DI_QTY_interp.csv');
 writematrix(Y, 'Model_Data/DI_SOI_interp.csv');
 
 for j = 1:numel(VARIABLE)
 
 % Gather data
-% [xData, yData, zData] = prepareSurfaceData(DI_qty_des, DI_SOI_des, VARIABLE{j});
-[xData, yData, zData] = prepareSurfaceData(m_diesel_mean*1e6, DI_SOI_mean, VARIABLE{j});
+[xData, yData, zData] = prepareSurfaceData(DI_qty_des, DI_SOI_des, VARIABLE{j});
+% [xData, yData, zData] = prepareSurfaceData(m_diesel_mean*1e6, DI_SOI_mean, VARIABLE{j});
 
 % Set up fittype and options.
 ft = 'linearinterp';
@@ -285,22 +285,26 @@ for i = 1:n_cycles
     end
 end
 
-% Plot
-figure; clf; hold on
+%% Plot
+RMSE = sqrt(mean((Q_gross_all - Q_gross_sim).^2));
+figure; clf; hold on; box on;
 plot(Q_gross_all)
 plot(Q_gross_sim)
 ylabel('Q_{gross} (J)'); legend('Experimental', 'Simulated')
-screenSize = get(0, 'ScreenSize');
+title("RMSE = " + num2str(RMSE, 3) + " (J)")
+screenSize = get(0, 'ScreenSize'); xlabel('Cycles');
 originalHeight = 400; % You can adjust this height value as needed
 set(gcf, 'Units', 'pixels', 'Position', [0, 0, screenSize(3), originalHeight]);
 
 print('Model_Plots/Q_gross_comparison', '-dpng', '-r300');
 
-figure; clf; hold on
+RMSE = sqrt(mean((CA50_all - CA50_sim).^2));
+figure; clf; hold on; box on;
 plot(CA50_all)
 plot(CA50_sim)
 ylabel('CA50 (aTDC)'); legend('Experimental', 'Simulated')
-screenSize = get(0, 'ScreenSize');
+title("RMSE = " + num2str(RMSE, 2) + " (deg)")
+screenSize = get(0, 'ScreenSize'); xlabel('Cycles');
 originalHeight = 400; % You can adjust this height value as needed
 set(gcf, 'Units', 'pixels', 'Position', [0, 0, screenSize(3), originalHeight]);
 
@@ -315,7 +319,8 @@ function x1_sim = conditional_Gauss(mu, Sigma, x2)
 % Conditional standard deviation
 sigma_cond = sqrt(Sigma(1, 1) - Sigma(1, 2:end) * Sigma(2:end, 2:end)^-1 * Sigma(2:end, 1));
 if sigma_cond < 0
-    sigma_cond = 0
+    sigma_cond = 0;
+    warning('Negative conditional variance, setting it to zero')
 end
 % Gaussian Conditional mean
 mu_cond = mu(1) + Sigma(1, 2:end) * Sigma(2:end, 2:end)^-1 * (x2 - mu(2:end))';

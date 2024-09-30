@@ -214,7 +214,7 @@ for i in range(n_cycles):
     X_res_sim[i] = conditional_Gauss(X_res_mu, X_res_Sigma, Q_gross_sim[i]) / 100
 
     # Cost function
-    cost_c[i] = alpha * ( CA50_sim[i] - 7.5 )**2 - eta_c_sim[i]
+    cost_c[i] = alpha * (CA50_sim[i] - 7.5) ** 2 + (eta_c_sim[i] - 1) ** 2
 
     # Residual mass matrix
     Matrix_res = X_res_sim[i] * np.array([[1 - eta_c_sim[i], 0], [eta_c_sim[i], 1]])

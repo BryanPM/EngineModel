@@ -170,10 +170,14 @@ eta_c_sim = np.zeros(n_cycles)
 X_res_sim = np.zeros(n_cycles)
 Q_gross_sim = np.zeros(n_cycles)
 CA50_sim = np.zeros(n_cycles)
+cost_c = np.zeros(n_cycles)
 
 # Initial condition
 M_fuel_sim[0] = M_fuel_init
 M_air_sim[0] = M_air_init
+
+# Const function parameter
+alpha = 1
 
 # Load lookup tables
 lookup_tables = load_lookup_tables(myDir)
@@ -209,14 +213,17 @@ for i in range(n_cycles):
     # Residual gas fraction
     X_res_sim[i] = conditional_Gauss(X_res_mu, X_res_Sigma, Q_gross_sim[i]) / 100
 
+    # Cost function
+    cost_c[i] = alpha * ( CA50_sim[i] - 7.5 )**2 - eta_c_sim[i]
+
     # Residual mass matrix
     Matrix_res = X_res_sim[i] * np.array([[1 - eta_c_sim[i], 0], [eta_c_sim[i], 1]])
 
     # Fresh fuel and air
-    input_state = np.array([Diesel_fuel + Ammonia_fuel, Fresh_air])
+    input_mass = np.array([Diesel_fuel + Ammonia_fuel, Fresh_air])
 
     if i < n_cycles - 1:
-        next_state = Matrix_res @ state + input_state
+        next_state = Matrix_res @ state + input_mass
         M_fuel_sim[i+1] = next_state[0]
         M_air_sim[i+1] = next_state[1]
 
@@ -241,5 +248,13 @@ plt.plot(CA50_sim, label='Simulated')
 plt.ylabel('CA50 (aTDC)')
 plt.legend()
 plt.title(f'CA50: RMSE = {RMSE_CA50:.2f} deg')
+plt.xlabel('Cycles')
+plt.show()
+
+# Plot cost function
+plt.figure()
+plt.plot(cost_c)
+plt.legend()
+plt.title('Cost function')
 plt.xlabel('Cycles')
 plt.show()

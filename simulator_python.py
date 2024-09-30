@@ -171,6 +171,7 @@ X_res_sim = np.zeros(n_cycles)
 Q_gross_sim = np.zeros(n_cycles)
 CA50_sim = np.zeros(n_cycles)
 cost_c = np.zeros(n_cycles)
+cost_cummulative = 0
 
 # Initial condition
 M_fuel_sim[0] = M_fuel_init
@@ -215,6 +216,7 @@ for i in range(n_cycles):
 
     # Cost function
     cost_c[i] = alpha * (CA50_sim[i] - 7.5) ** 2 + (eta_c_sim[i] - 1) ** 2
+    cost_cummulative += cost_c[i]
 
     # Residual mass matrix
     Matrix_res = X_res_sim[i] * np.array([[1 - eta_c_sim[i], 0], [eta_c_sim[i], 1]])
@@ -255,6 +257,6 @@ plt.show()
 plt.figure()
 plt.plot(cost_c)
 plt.legend()
-plt.title('Cost function')
+plt.title(f'Cost function: Total = {cost_cummulative:.1f}')
 plt.xlabel('Cycles')
 plt.show()

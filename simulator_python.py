@@ -29,45 +29,40 @@ def load_lookup_tables(myDir):
 
     return lookup_tables
 
-import numpy as np
-from scipy.interpolate import RegularGridInterpolator
 
 def Gauss_parameters(Diesel_fuel, Diesel_SOI, lookup_tables):
+    
     # Convert Diesel_fuel from kg to mg for interpolation
     Diesel_fuel_mg = Diesel_fuel * 1e6
     
-    # Ensure that the grid points are sorted in ascending order
-    DI_QTY_interp = lookup_tables['DI_QTY_interp']
-    DI_SOI_interp = lookup_tables['DI_SOI_interp']
-    
-    # If DI_QTY_interp and DI_SOI_interp are already in sorted order,
-    # you can skip sorting. Otherwise, you can sort them as needed.
+    # Extract grid points
+    DI_QTY_interp = lookup_tables['DI_QTY_interp'][0, :]
+    DI_SOI_interp = lookup_tables['DI_SOI_interp'][:, 0]
     
     # Create the interpolators using RegularGridInterpolator for each lookup table
-    interp_mu_eta_1 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['mu_eta_1'].T)
-    interp_mu_eta_2 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['mu_eta_2'].T)
-    interp_mu_eta_3 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['mu_eta_3'].T)
+    interp_mu_eta_1 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['mu_eta_1'].T)
+    interp_mu_eta_2 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['mu_eta_2'].T)
+    interp_mu_eta_3 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['mu_eta_3'].T)
     
-    # Create interpolators for covariance matrices similarly
-    interp_Sigma_eta_11 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_eta_11'].T)
-    interp_Sigma_eta_12 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_eta_12'].T)
-    interp_Sigma_eta_13 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_eta_13'].T)
-    interp_Sigma_eta_22 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_eta_22'].T)
-    interp_Sigma_eta_23 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_eta_23'].T)
-    interp_Sigma_eta_33 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_eta_33'].T)
+    interp_Sigma_eta_11 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_eta_11'].T)
+    interp_Sigma_eta_12 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_eta_12'].T)
+    interp_Sigma_eta_13 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_eta_13'].T)
+    interp_Sigma_eta_22 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_eta_22'].T)
+    interp_Sigma_eta_23 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_eta_23'].T)
+    interp_Sigma_eta_33 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_eta_33'].T)
     
-    interp_mu_X_1 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['mu_X_1'].T)
-    interp_mu_X_2 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['mu_X_2'].T)
+    interp_mu_X_1 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['mu_X_1'].T)
+    interp_mu_X_2 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['mu_X_2'].T)
     
-    interp_Sigma_X_11 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_X_11'].T)
-    interp_Sigma_X_12 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_X_12'].T)
-    interp_Sigma_X_22 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_X_22'].T)
+    interp_Sigma_X_11 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_X_11'].T)
+    interp_Sigma_X_12 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_X_12'].T)
+    interp_Sigma_X_22 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_X_22'].T)
     
-    interp_mu_CA50 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['mu_CA50'].T)
-    interp_Sigma_CA50 = RegularGridInterpolator((DI_QTY_interp[0, :], DI_SOI_interp[:, 0]), lookup_tables['Sigma_CA50'].T)
+    interp_mu_CA50 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['mu_CA50'].T)
+    interp_Sigma_CA50 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_CA50'].T)
     
     # Prepare point for interpolation
-    point = np.ascontiguousarray([Diesel_fuel_mg, Diesel_SOI])  # Ensure point is C-contiguous
+    point = [Diesel_fuel_mg, Diesel_SOI]
 
     # Interpolate the values for the given Diesel_fuel_mg and Diesel_SOI
     mu_eta_1_eval = interp_mu_eta_1(point)
@@ -135,9 +130,10 @@ n_cycles_file = 100
 # Load CSV files
 for fileName in myFiles:
 
+    # Read CSV file
     cycleData = pd.read_csv(os.path.join(myDir, fileName)).values
 
-    # Initial condition
+    # Get initial condition
     if len(Q_gross_all) == 0:
         M_fuel_init = cycleData[0, 0]
         M_air_init = cycleData[1, 1]
@@ -177,8 +173,8 @@ cost_cummulative = 0
 M_fuel_sim[0] = M_fuel_init
 M_air_sim[0] = M_air_init
 
-# Const function parameter
-alpha = 1
+# Cost function parameter
+alpha = 0.8
 
 # Load lookup tables
 lookup_tables = load_lookup_tables(myDir)
@@ -224,6 +220,7 @@ for i in range(n_cycles):
     # Fresh fuel and air
     input_mass = np.array([Diesel_fuel + Ammonia_fuel, Fresh_air])
 
+    # Dynamics
     if i < n_cycles - 1:
         next_state = Matrix_res @ state + input_mass
         M_fuel_sim[i+1] = next_state[0]
@@ -251,6 +248,15 @@ plt.ylabel('CA50 (aTDC)')
 plt.legend()
 plt.title(f'CA50: RMSE = {RMSE_CA50:.2f} deg')
 plt.xlabel('Cycles')
+plt.show()
+
+# Plot combustion efficiency
+plt.figure()
+plt.plot(eta_c_sim)
+plt.legend()
+plt.title('Combustion efficiency')
+plt.xlabel('Cycles')
+plt.ylim([0, 1])
 plt.show()
 
 # Plot cost function

@@ -32,9 +32,6 @@ def load_lookup_tables(myDir):
 
 def Gauss_parameters(Diesel_fuel, Diesel_SOI, lookup_tables):
     
-    # Convert Diesel_fuel from kg to mg for interpolation
-    Diesel_fuel_mg = Diesel_fuel * 1e6
-    
     # Extract grid points
     DI_QTY_interp = lookup_tables['DI_QTY_interp'][0, :]
     DI_SOI_interp = lookup_tables['DI_SOI_interp'][:, 0]
@@ -98,7 +95,6 @@ def Gauss_parameters(Diesel_fuel, Diesel_SOI, lookup_tables):
     return eta_c_mu, eta_c_Sigma, X_res_mu, X_res_Sigma, mu_CA50_eval.flatten()[0], Sigma_CA50_eval.flatten()[0]
 
 
-
 def conditional_Gauss(mu, Sigma, x2):
     
     # Conditional variance
@@ -148,11 +144,13 @@ for fileName in myFiles:
 
 # Convert to NumPy arrays
 Q_gross_all = np.concatenate(Q_gross_all)
-m_diesel_all = np.concatenate(m_diesel_all)
 m_ammonia_all = np.concatenate(m_ammonia_all)
 m_air_all = np.concatenate(m_air_all)
 CA50_all = np.concatenate(CA50_all)
-DI_SOI_all = np.concatenate(DI_SOI_all)
+
+# Scale inputs
+DI_SOI_all = (np.concatenate(DI_SOI_all) - 42.56) / 6.72
+m_diesel_all = (np.concatenate(m_diesel_all) * 1e6 - 7.85) / 2.26
 
 # Simulator constants
 Q_LHV_diesel = 44.1 * 1e6
@@ -168,13 +166,16 @@ Q_gross_sim = np.zeros(n_cycles)
 CA50_sim = np.zeros(n_cycles)
 cost_c = np.zeros(n_cycles)
 cost_cummulative = 0
+M_fuel_scaled = np.zeros(n_cycles)
+M_air_scaled = np.zeros(n_cycles)
+CA50_scaled = np.zeros(n_cycles)
 
 # Initial condition
 M_fuel_sim[0] = M_fuel_init
 M_air_sim[0] = M_air_init
 
 # Cost function parameter
-alpha = 0.8
+alpha = 0.02
 
 # Load lookup tables
 lookup_tables = load_lookup_tables(myDir)
@@ -182,8 +183,12 @@ lookup_tables = load_lookup_tables(myDir)
 for i in range(n_cycles):
 
     # Diesel inputs: THIS ARE THE INPUTS YOU CAN MODIFY
-    Diesel_SOI = DI_SOI_all[i]
-    Diesel_fuel = m_diesel_all[i]
+    Diesel_SOI_scaled = DI_SOI_all[i]       # Keep between -1 and 1
+    Diesel_fuel_mg_scaled = m_diesel_all[i] # Keep between -1 and 1
+
+    # Scale inputs to engineering units
+    Diesel_SOI = Diesel_SOI_scaled * 6.72 + 42.56
+    Diesel_fuel_mg = Diesel_fuel_mg_scaled * 2.26 + 7.85
 
     # Ammonia and air inputs
     Ammonia_fuel = m_ammonia_all[i]
@@ -193,13 +198,21 @@ for i in range(n_cycles):
     state = np.array([M_fuel_sim[i], M_air_sim[i]])
 
     # Gaussian parameters
-    eta_c_mu, eta_c_Sigma, X_res_mu, X_res_Sigma, mu_CA50_eval, Sigma_CA50_eval = Gauss_parameters(Diesel_fuel, Diesel_SOI, lookup_tables)
+    eta_c_mu, eta_c_Sigma, X_res_mu, X_res_Sigma, mu_CA50_eval, Sigma_CA50_eval = Gauss_parameters(Diesel_fuel_mg, Diesel_SOI, lookup_tables)
 
     # Simulate CA50
     CA50_sim[i] = np.random.normal(mu_CA50_eval, Sigma_CA50_eval)
 
+    # Scale state: THIS ARE THE STATES YOU CAN USE FOR TRAINING SNN
+    M_fuel_scaled[i] = M_fuel_sim[i] * 1e5 - 7.85  # Should be between -1 and 1
+    M_air_scaled[i] = M_air_sim[i] *  1e4 - 16.6   # Should be between -1 and 1
+    CA50_scaled[i] = CA50_sim[i] * 1e-1 - 0.61     # Should be between -1 and 1
+    
     # Combustion efficiency
     eta_c_sim[i] = conditional_Gauss(eta_c_mu, eta_c_Sigma, state * 1e6) / 100
+
+    # Scale diesel quantity to kg
+    Diesel_fuel = Diesel_fuel_mg * 1e-6
 
     # Effective LHV
     Q_LHV_eff = (Diesel_fuel * Q_LHV_diesel + Ammonia_fuel * Q_LHV_ammonia) / (Diesel_fuel + Ammonia_fuel)
@@ -210,7 +223,7 @@ for i in range(n_cycles):
     # Residual gas fraction
     X_res_sim[i] = conditional_Gauss(X_res_mu, X_res_Sigma, Q_gross_sim[i]) / 100
 
-    # Cost function
+    # Cost function # FITNESS FUNCTION TO EVALUATE SNN PERFORMANCE
     cost_c[i] = alpha * (CA50_sim[i] - 7.5) ** 2 + (eta_c_sim[i] - 1) ** 2
     cost_cummulative += cost_c[i]
 

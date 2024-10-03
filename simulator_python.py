@@ -30,6 +30,43 @@ def load_lookup_tables(myDir):
     return lookup_tables
 
 
+def load_experiments(myDir, n_cycles_file):
+
+    # Initialize variables
+    Q_gross_exp = []
+    m_diesel_exp = []
+    CA50_exp = []
+    DI_SOI_exp = []
+
+    # Path to measured data
+    myFiles = [f for f in os.listdir(myDir) if f.endswith('_Data.csv')]
+
+    # Load CSV files
+    for fileName in myFiles:
+
+        # Read CSV file
+        cycleData = pd.read_csv(os.path.join(myDir, fileName)).values
+
+        # Get initial condition (Kg)
+        if len(Q_gross_exp) == 0:
+            M_fuel_init = cycleData[0, 0]
+            M_air_init = cycleData[1, 1]
+
+        # Extract time series
+        Q_gross_exp.append(cycleData[:n_cycles_file, 3])
+        m_diesel_exp.append(cycleData[:n_cycles_file, 5])
+        CA50_exp.append(cycleData[:n_cycles_file, 8])
+        DI_SOI_exp.append(cycleData[:n_cycles_file, 9])
+
+    # Convert to NumPy arrays
+    Q_gross_exp = np.concatenate(Q_gross_exp)
+    CA50_exp = np.concatenate(CA50_exp)
+    DI_SOI_exp = np.concatenate(DI_SOI_exp)
+    m_diesel_exp = np.concatenate(m_diesel_exp)
+    
+    return M_fuel_init, M_air_init, Q_gross_exp, CA50_exp, DI_SOI_exp, m_diesel_exp
+
+
 def Gauss_parameters(Diesel_fuel, Diesel_SOI, lookup_tables):
     
     # Extract grid points
@@ -59,9 +96,9 @@ def Gauss_parameters(Diesel_fuel, Diesel_SOI, lookup_tables):
     interp_Sigma_CA50 = RegularGridInterpolator((DI_QTY_interp, DI_SOI_interp), lookup_tables['Sigma_CA50'].T)
     
     # Prepare point for interpolation
-    point = [Diesel_fuel_mg, Diesel_SOI]
+    point = [Diesel_fuel, Diesel_SOI]
 
-    # Interpolate the values for the given Diesel_fuel_mg and Diesel_SOI
+    # Interpolate the values for the given Diesel_fuel and Diesel_SOI
     mu_eta_1_eval = interp_mu_eta_1(point)
     mu_eta_2_eval = interp_mu_eta_2(point)
     mu_eta_3_eval = interp_mu_eta_3(point)
@@ -108,54 +145,28 @@ def conditional_Gauss(mu, Sigma, x2):
     return np.random.normal(mu_cond, sigma_cond)
 
 
-# Path to measured data
+# Path to lookup tables and experimental data
 myDir = 'Model_Data/'
-myFiles = [f for f in os.listdir(myDir) if f.endswith('_Data.csv')]
 
-# Initialize variables
-Q_gross_all = []
-m_diesel_all = []
-m_ammonia_all = []
-m_air_all = []
-CA50_all = []
-DI_SOI_all = []
+# Load lookup tables
+lookup_tables = load_lookup_tables(myDir)
 
 # Cycles per file
 n_cycles_file = 100
 
-# Load CSV files
-for fileName in myFiles:
-
-    # Read CSV file
-    cycleData = pd.read_csv(os.path.join(myDir, fileName)).values
-
-    # Get initial condition
-    if len(Q_gross_all) == 0:
-        M_fuel_init = cycleData[0, 0]
-        M_air_init = cycleData[1, 1]
-
-    # Extract time series
-    Q_gross_all.append(cycleData[:n_cycles_file, 3])
-    m_diesel_all.append(cycleData[:n_cycles_file, 5])
-    m_ammonia_all.append(cycleData[:n_cycles_file, 6])
-    m_air_all.append(cycleData[:n_cycles_file, 7])
-    CA50_all.append(cycleData[:n_cycles_file, 8])
-    DI_SOI_all.append(cycleData[:n_cycles_file, 9])
-
-# Convert to NumPy arrays
-Q_gross_all = np.concatenate(Q_gross_all)
-m_ammonia_all = np.concatenate(m_ammonia_all)
-m_air_all = np.concatenate(m_air_all)
-CA50_all = np.concatenate(CA50_all)
-
-# Scale inputs
-DI_SOI_all = (np.concatenate(DI_SOI_all) - 42.56) / 6.72
-m_diesel_all = (np.concatenate(m_diesel_all) * 1e6 - 7.85) / 2.26
+# Load experimental data
+M_fuel_init, M_air_init, Q_gross_exp, CA50_exp, DI_SOI_exp, m_diesel_exp = \
+load_experiments(myDir, n_cycles_file)
 
 # Simulator constants
-Q_LHV_diesel = 44.1 * 1e6
-Q_LHV_ammonia = 18.6 * 1e6
-n_cycles = len(Q_gross_all)
+Q_LHV_diesel = 44.1 * 1e6   # Lower heating value of Diesel (J)
+Q_LHV_ammonia = 18.6 * 1e6  # Lower heating value of Ammonia (J)
+n_cycles = len(Q_gross_exp) # Number of cycles in simulation
+alpha = 0.02                # Cost function parameter
+
+# Scale inputs to simulate how EONS will send messages to ORCAS
+DI_SOI_EONS = (DI_SOI_exp - 42.56) / 6.72
+m_diesel_EONS = (m_diesel_exp * 1e6 - 7.85) / 2.26
 
 # Initialize variables
 M_fuel_sim = np.zeros(n_cycles)
@@ -169,53 +180,49 @@ cost_cummulative = 0
 M_fuel_scaled = np.zeros(n_cycles)
 M_air_scaled = np.zeros(n_cycles)
 CA50_scaled = np.zeros(n_cycles)
+Diesel_SOI_EONS = np.zeros(n_cycles)
+Diesel_fuel_EONS = np.zeros(n_cycles)
+Diesel_SOI = np.zeros(n_cycles)
+Diesel_fuel = np.zeros(n_cycles)
 
 # Initial condition
 M_fuel_sim[0] = M_fuel_init
 M_air_sim[0] = M_air_init
 
-# Cost function parameter
-alpha = 0.02
-
-# Load lookup tables
-lookup_tables = load_lookup_tables(myDir)
-
+# Loop through cycles
 for i in range(n_cycles):
 
-    # Diesel inputs: THIS ARE THE INPUTS YOU CAN MODIFY
-    Diesel_SOI_scaled = DI_SOI_all[i]       # Keep between -1 and 1
-    Diesel_fuel_mg_scaled = m_diesel_all[i] # Keep between -1 and 1
+    # Diesel feedback inputs: THESE ARE THE INPUTS YOU CAN MODIFY
+    Diesel_SOI_EONS[i]  = DI_SOI_EONS[i]   # Keep between -1 and 1
+    Diesel_fuel_EONS[i] = m_diesel_EONS[i] # Keep between -1 and 1
 
-    # Scale inputs to engineering units
-    Diesel_SOI = Diesel_SOI_scaled * 6.72 + 42.56
-    Diesel_fuel_mg = Diesel_fuel_mg_scaled * 2.26 + 7.85
+    # Diesel feedforward inputs: THESE WILL BE PROVIDED FROM ORCAS,USING CONSTANTS FOR NOW
+    Diesel_SOI_FF = 42.56   # deg aTDC
+    Diesel_fuel_FF = 7.85   # mg
 
-    # Ammonia and air inputs
-    Ammonia_fuel = m_ammonia_all[i]
-    Fresh_air = m_air_all[i]
+    # Ammonia and air inputs: THESE WILL BE PROVIDED FROM ORCAS,USING CONSTANTS FOR NOW
+    Ammonia_fuel_FF = 69    # mg
+    Fresh_air_FF = 1600     # mg
 
-    # State
-    state = np.array([M_fuel_sim[i], M_air_sim[i]])
+    # Combine EONS feedback and feelforward diesel commands
+    Diesel_SOI[i] = Diesel_SOI_EONS[i] * 6.72 + Diesel_SOI_FF
+    Diesel_fuel[i] = Diesel_fuel_EONS[i] * 2.26 + Diesel_fuel_FF
 
     # Gaussian parameters
-    eta_c_mu, eta_c_Sigma, X_res_mu, X_res_Sigma, mu_CA50_eval, Sigma_CA50_eval = Gauss_parameters(Diesel_fuel_mg, Diesel_SOI, lookup_tables)
-
-    # Simulate CA50
+    eta_c_mu, eta_c_Sigma, X_res_mu, X_res_Sigma, mu_CA50_eval, Sigma_CA50_eval \
+        = Gauss_parameters(Diesel_fuel[i], Diesel_SOI[i], lookup_tables)
+    
+    # Mass state
+    state = np.array([M_fuel_sim[i], M_air_sim[i]])
+    # Combustion state
     CA50_sim[i] = np.random.normal(mu_CA50_eval, Sigma_CA50_eval)
-
-    # Scale state: THIS ARE THE STATES YOU CAN USE FOR TRAINING SNN
-    M_fuel_scaled[i] = M_fuel_sim[i] * 1e5 - 7.85  # Should be between -1 and 1
-    M_air_scaled[i] = M_air_sim[i] *  1e4 - 16.6   # Should be between -1 and 1
-    CA50_scaled[i] = CA50_sim[i] * 1e-1 - 0.61     # Should be between -1 and 1
     
     # Combustion efficiency
     eta_c_sim[i] = conditional_Gauss(eta_c_mu, eta_c_Sigma, state * 1e6) / 100
 
-    # Scale diesel quantity to kg
-    Diesel_fuel = Diesel_fuel_mg * 1e-6
-
     # Effective LHV
-    Q_LHV_eff = (Diesel_fuel * Q_LHV_diesel + Ammonia_fuel * Q_LHV_ammonia) / (Diesel_fuel + Ammonia_fuel)
+    Q_LHV_eff = (Diesel_fuel[i] * Q_LHV_diesel + Ammonia_fuel_FF * Q_LHV_ammonia) / \
+                (Diesel_fuel[i] + Ammonia_fuel_FF)
 
     # Gross heat release
     Q_gross_sim[i] = eta_c_sim[i] * M_fuel_sim[i] * Q_LHV_eff
@@ -230,8 +237,13 @@ for i in range(n_cycles):
     # Residual mass matrix
     Matrix_res = X_res_sim[i] * np.array([[1 - eta_c_sim[i], 0], [eta_c_sim[i], 1]])
 
-    # Fresh fuel and air
-    input_mass = np.array([Diesel_fuel + Ammonia_fuel, Fresh_air])
+    # Fresh fuel and air (Kg)
+    input_mass = np.array([Diesel_fuel[i] + Ammonia_fuel_FF, Fresh_air_FF]) * 1e-6
+
+    # Scale state: THIS ARE THE STATES YOU CAN USE FOR TRAINING THE SNN
+    M_fuel_scaled[i] = M_fuel_sim[i] * 1e5 - 7.85  # Should be between -1 and 1
+    M_air_scaled[i] = M_air_sim[i] *  1e4 - 16.6   # Should be between -1 and 1
+    CA50_scaled[i] = CA50_sim[i] * 1e-1 - 0.61     # Should be between -1 and 1
 
     # Dynamics
     if i < n_cycles - 1:
@@ -240,12 +252,12 @@ for i in range(n_cycles):
         M_air_sim[i+1] = next_state[1]
 
 # RMSE Calculation
-RMSE_Q_gross = np.sqrt(np.mean((Q_gross_all - Q_gross_sim) ** 2))
-RMSE_CA50 = np.sqrt(np.mean((CA50_all - CA50_sim) ** 2))
+RMSE_Q_gross = np.sqrt(np.mean((Q_gross_exp - Q_gross_sim) ** 2))
+RMSE_CA50 = np.sqrt(np.mean((CA50_exp - CA50_sim) ** 2))
 
 # Plot Q_gross
 plt.figure()
-plt.plot(Q_gross_all, label='Experimental')
+plt.plot(Q_gross_exp, label='Experimental')
 plt.plot(Q_gross_sim, label='Simulated')
 plt.ylabel('Q_gross (J)')
 plt.legend()
@@ -255,7 +267,7 @@ plt.show()
 
 # Plot CA50
 plt.figure()
-plt.plot(CA50_all, label='Experimental')
+plt.plot(CA50_exp, label='Experimental')
 plt.plot(CA50_sim, label='Simulated')
 plt.ylabel('CA50 (aTDC)')
 plt.legend()
@@ -279,3 +291,12 @@ plt.legend()
 plt.title(f'Cost function: Total = {cost_cummulative:.1f}')
 plt.xlabel('Cycles')
 plt.show()
+
+# Plot feedback from EONS
+fig, ax = plt.subplots(2, 1)
+ax[0].plot(Diesel_SOI_EONS)
+ax[0].set_title('Feedback from EONS')
+ax[0].set_ylabel('Diesel SOI')
+ax[1].plot(Diesel_fuel_EONS)
+ax[1].set_ylabel('Diesel mass')
+ax[1].set_xlabel('Cycle')

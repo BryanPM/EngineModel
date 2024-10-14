@@ -54,7 +54,7 @@ bounds = ((np.min(lookup_tables['DI_QTY_interp'][0, :]), np.max(lookup_tables['D
           (np.min(lookup_tables['DI_SOI_interp'][:, 0]), np.max(lookup_tables['DI_SOI_interp'][:, 0])))
 
 # Cost function parameter
-alpha = 0.002
+alpha = 0.02
 
 # Optimize
 point_opt = minimize(average_cost,

@@ -18,9 +18,6 @@ def load_lookup_tables(myDir):
 
 
 def average_cost(point, alpha, lookup_tables):
-
-    # Unpack variables
-    Diesel_fuel, Diesel_SOI = point
     
     # Extract grid points
     DI_QTY_interp = lookup_tables['DI_QTY_interp'][0, :]
@@ -57,7 +54,7 @@ bounds = ((np.min(lookup_tables['DI_QTY_interp'][0, :]), np.max(lookup_tables['D
           (np.min(lookup_tables['DI_SOI_interp'][:, 0]), np.max(lookup_tables['DI_SOI_interp'][:, 0])))
 
 # Cost function parameter
-alpha = 0.02
+alpha = 0.002
 
 # Optimize
 point_opt = minimize(average_cost,
@@ -72,4 +69,4 @@ point_opt = minimize(average_cost,
 cost_opt = average_cost(point_opt, alpha, lookup_tables)
 
 # Solution
-print(f"Point = [{point_opt[0]:.2f}, {point_opt[1]:.2f}], cost = {cost_opt[0]:.2f}")
+print(f"alpha = {alpha}, diesel input = [{point_opt[0]:.2f} mg, {point_opt[1]:.2f} deg], cost = {cost_opt[0]:.2f}")

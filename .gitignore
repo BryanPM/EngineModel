@@ -1,6 +1,9 @@
+# Ignore Mac system file
 .DS_Store
 */.DS_Store
 
+# Ignore all files in the jpg/ directory
 jpg/*
 
-.venv
+# Ignore Python virtual environment
+.venv/

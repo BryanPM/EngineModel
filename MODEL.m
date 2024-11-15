@@ -3,11 +3,12 @@ clear all
 clc
 
 %% Load data
-myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/20240305/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
-for i = 1:length(myFiles)
-close all
+% for i = 1:length(myFiles)
+
+i = 15;
 
 % Load files
 fileName = myFiles(i).name; 
@@ -17,7 +18,7 @@ load([myDir, fileName]);
 baseName = erase(fileName, ".mat");
 baseName = baseName(15:end-10);
 
-%% Estimate fuel quantity
+% Estimate fuel quantity
 
 % Number of cycles in file
 n_cycles = length(Cylinder_1_Cycle_Data.IMEPn);
@@ -57,7 +58,7 @@ new_index = linspace(1, original_size, n_cycles);
 % Use interp1 to interpolate the signal to the new index
 PI_quantity_c2c = interp1(1:original_size, PI_quantity, new_index)';
 
-%% Estimate residual gas fraction
+% Estimate residual gas fraction
 
 % Model parameters
 EVC = -355;
@@ -84,7 +85,7 @@ for i = 1:n_cycles
     X_res(i) =  (Volume.Volume(i_evc) / Volume.Volume(i_evo)) * (Pcyl_CA(i_evc, i) / Pcyl_CA(i_evo, i)) ^ (1 / gamma);
 end
 
-%% Estimate combustion efficiency
+% Estimate combustion efficiency
 
 % Potential heat release
 Q_potential = DI_quantity_c2c * Q_LHV_diesel + PI_quantity_c2c * Q_LHV_ammonia;
@@ -108,7 +109,7 @@ figure; hold on; box on;
 plot(eta_c);
 plot(eta_c_mea_c2c, 'LineWidth', 2); legend('Estimated', 'Measured');
 ylabel('Combustion efficiency'); xlabel('Cycle')
-print(['Model_Plots/', baseName, 'eta_c'], '-dpng', '-r300');
+% print(['Model_Plots/', baseName, 'eta_c'], '-dpng', '-r300');
 
 %% Estimate in-cylinder mass
 
@@ -147,7 +148,7 @@ figure
 subplot(2,1,1); plot(M_fuel*1e6); ylabel('In-cylinder fuel estimate (mg)')
 subplot(2,1,2); plot(M_air*1e6); ylabel('In-cylinder air estimate (mg)')
 xlabel('Cycles');
-print(['Model_Plots/', baseName, 'Mass'], '-dpng', '-r300');
+% print(['Model_Plots/', baseName, 'Mass'], '-dpng', '-r300');
 
 %% Residual gas fraction as function of Q_gross
 
@@ -173,7 +174,7 @@ histogram(X_res_per_model, "Normalization", "pdf");
 legend('Experimental', 'Conditional Gaussian')
 xlabel('X_{res} (%)'); ylabel('PDF')
 
-print(['Model_Plots/', baseName, 'X_res_model'], '-dpng', '-r300');
+% print(['Model_Plots/', baseName, 'X_res_model'], '-dpng', '-r300');
 
 %% Combustion Efficiency as function of AFR
 
@@ -202,7 +203,7 @@ histogram(eta_c_per_model, "Normalization", "pdf");
 legend('Experimental', 'Conditional Gaussian')
 xlabel('Combustion Efficiency (%)'); ylabel('PDF')
 
-print(['Model_Plots/', baseName, 'eta_c_model'], '-dpng', '-r300');
+% print(['Model_Plots/', baseName, 'eta_c_model'], '-dpng', '-r300');
 
 %% Simulate dynamic system
 
@@ -291,7 +292,7 @@ histogram(X_res_sim*100, "Normalization", "pdf");
 legend('Data', 'Simulator','Location','eastoutside')
 view(90, 90); set(gca, 'XDir', 'reverse');
 
-print(['Model_Plots/', baseName, 'Simulator'], '-dpng', '-r300');
+% print(['Model_Plots/', baseName, 'Simulator'], '-dpng', '-r300');
 
 %% Combustion phasing
 
@@ -305,14 +306,14 @@ DI_timing_des = -mean(Cylinder_1_Cycle_Data.Injection_1_SOI);
 
 %% Safe file
 
-model_data = table(M_fuel_sim, M_air_sim, eta_c, Q_gross, X_res, Diesel_fuel, ...
-    Ammonia_fuel, Fresh_air, CA50, -DI_timing, DI_duration);
-writetable(model_data, ['Model_Data/', baseName, 'Data.csv']);
-save(['Model_Data/', baseName, 'Parameters.mat'], 'Q_LHV_diesel', ...
-    'Q_LHV_ammonia', 'eta_c_mu', 'eta_c_Sigma', 'X_res_mu', 'X_res_Sigma', ...
-    'DI_quantity_des', 'DI_timing_des');
+% model_data = table(M_fuel_sim, M_air_sim, eta_c, Q_gross, X_res, Diesel_fuel, ...
+%     Ammonia_fuel, Fresh_air, CA50, -DI_timing, DI_duration);
+% writetable(model_data, ['Model_Data/', baseName, 'Data.csv']);
+% save(['Model_Data/', baseName, 'Parameters.mat'], 'Q_LHV_diesel', ...
+%     'Q_LHV_ammonia', 'eta_c_mu', 'eta_c_Sigma', 'X_res_mu', 'X_res_Sigma', ...
+%     'DI_quantity_des', 'DI_timing_des');
 
-end
+% end
 %% Auxiliary functions
 
 function x1_sim = conditional_Gauss(mu, Sigma, x2)

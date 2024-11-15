@@ -3,8 +3,7 @@ close all
 clc
 
 %% Load the folder for parsing
-% myDir = '~/Applications/UTORII_DATA/';
-myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/';
+myDir = '/Users/1pq/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/Research/NTRC/UTORII_2024/UTORII Data/20240305/';
 myFiles = dir(fullfile(myDir, '*DI*SOI*.mat'));
 
 %% Parse the folder and calculate CoV for each file
@@ -65,9 +64,10 @@ figure(1); clf; hold on
 contourf(DI_Q, DI_SOI, CoV_IMEP_spline, [0:3:21 2],'showtext','on');
 plot(DI_quantity, DI_timing,'o','markersize',6,'MarkerFaceColor',0.7*[1 1 1],'MarkerEdgeColor','b');
 contour(DI_Q, DI_SOI, CA50_spline, 7.4*[1 1],'-k','linewidth',2);
-legend('CoV IMEP(%)', 'Data points', 'CA50 = 7.5 [CA deg]','location','southeast')
+legend('CoV IMEP(%)', 'Data points', 'CA50 = 7.5 [CAD]','location','northwest')
 xlabel('Diesel Injection Quantity (mg)');
 ylabel('Diesel Injection timing (deg bTDC)');
-title('Experimental Conditions'); box on; hold off
+% title('Experimental Conditions'); 
+box on; hold off
 
-print('Model_Plots/Overview', '-dpng', '-r600');
+% print('Model_Plots/Overview', '-dpng', '-r600');

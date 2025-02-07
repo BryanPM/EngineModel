@@ -9,8 +9,7 @@ files = dir(myDir+"*.mat");
 n_files = length(files);
 
 MEASUREMENTS = zeros(5,n_files);
-ROOT_FIND = zeros(5,n_files);
-OPTIMAL = zeros(5,n_files);
+ROOT_FIND = zeros(4,n_files);
 
 for j = 1:length(files)
 load([files(j).folder, '/', files(j).name])
@@ -119,15 +118,7 @@ par = [X_k, m_diesel_k, m_NH3_k, m_air_k, Q_gross_k, m_NH3_unburned_k];
 % Root finding
 fun = @(x)dual_fuel(x,par);
 options = optimoptions('fsolve', 'Display', 'off');
-x_root = fsolve(fun, zeros(1,5), options);
-
-% Constraint minization
-fun = @(x)dual_fuel_mse(x,par);
-options = optimoptions('fmincon', 'Display', 'off');
-x_min = fmincon(fun, [m_diesel_k, m_NH3_k, m_air_k, 0.5, 0.5], ...
-                [], [], [], [], ...
-                [m_diesel_k, m_NH3_k, m_air_k, 0, 0], ones(1,5), ...
-                [], options);
+x_root = fsolve(fun, zeros(1,4), options);
 
 % Print
 FILE_NAME{j} = files(j).name;
@@ -137,7 +128,6 @@ MEASUREMENTS(:,j) = [m_diesel_k * 1e6;
                      X_k * 1e2;
                      m_NH3_unburned_k * 1e6];
 ROOT_FIND(:,j) = x_root;
-OPTIMAL(:,j) = x_min;
 
 end
 
@@ -146,33 +136,26 @@ end
 figure(1); clf; hold on
 plot(MEASUREMENTS(1,:), 'o', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'r')
 plot(ROOT_FIND(1,:) * 1e6, 's', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'g')
-plot(OPTIMAL(1,:) * 1e6, '^', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'b')
-legend({'m_{in}', 'M_{fuel} root', 'M_{fuel} optimal'}, 'Location', 'best');
+legend({'m_{in}', 'M_{fuel}'}, 'Location', 'best');
 xlabel('File number')
 ylabel('Diesel fuel (mg)')
 
 figure(2); clf; hold on
 plot(MEASUREMENTS(2,:), 'o', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'r')
 plot(ROOT_FIND(2,:) * 1e6, 's', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'g')
-plot(OPTIMAL(2,:) * 1e6, '^', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'b')
-legend({'m_{in}', 'M_{fuel} root', 'M_{fuel} optimal'}, 'Location', 'best');
+legend({'m_{in}', 'M_{fuel}'}, 'Location', 'best');
 xlabel('File number')
 ylabel('Ammonia fuel (mg)')
 
 figure(3); clf; hold on
 plot(MEASUREMENTS(3,:), 'o', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'r')
 plot(ROOT_FIND(3,:) * 1e3, 's', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'g')
-plot(OPTIMAL(3,:) * 1e3, '^', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'b')
-legend({'m_{in}', 'M_{fuel} root', 'M_{fuel} optimal'}, 'Location', 'best');
+legend({'m_{in}', 'M_{fuel}'}, 'Location', 'best');
 xlabel('File number')
 ylabel('Air mass (g)')
 
 figure(4); clf; hold on
 plot(ROOT_FIND(4,:), 's', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'r')
-plot(ROOT_FIND(5,:), 's', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'g')
-plot(OPTIMAL(4,:), '^', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'b')
-plot(OPTIMAL(5,:), 'v', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'c')
-legend({'Diesel root', 'NH3 root', 'Diesel optimal', 'NH3 root'}, 'Location', 'best');
 xlabel('File number')
 ylabel('Combustion Efficiency (-)')
 
@@ -181,11 +164,6 @@ plot(MEASUREMENTS(4,:), 'o', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'Marker
 xlabel('File number')
 ylabel('Residual fraction (%)')
 
-figure(6); clf; hold on
-plot(MEASUREMENTS(5,:), 'o', 'LineWidth', 1, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'r')
-xlabel('File number')
-ylabel('Unburned NH3 (mg)')
-
 %% Functions
 function y = dual_fuel(x, par)
     
@@ -193,8 +171,7 @@ function y = dual_fuel(x, par)
     M_diesel = x(1);
     M_NH3 = x(2);
     M_air = x(3);
-    eta_diesel = x(4);
-    eta_NH3 = x(5);
+    eta = x(4);
 
     % Unpack parameters
     X_k = par(1);
@@ -211,21 +188,20 @@ function y = dual_fuel(x, par)
     Q_LHV_NH3    = 18.6e6;
 
     % Matrix
-    A = [1 - X_k * (1 - eta_diesel),                0,              0;
-                    0,                  1 - X_k * (1 - eta_NH3),    0;
-         X_k * AFR_diesel * eta_diesel, X_k * AFR_NH3 * eta_NH3, 1 - X_k;
-          Q_LHV_diesel * eta_diesel,       Q_LHV_NH3 * eta_NH3,     0;
-                    0,                         1 - eta_NH3,          0    ];
+    A = [1 - X_k * (1 - eta),                0,              0;
+                    0,                  1 - X_k * (1 - eta),    0;
+         X_k * AFR_diesel * eta, X_k * AFR_NH3 * eta, 1 - X_k;
+          Q_LHV_diesel * eta,       Q_LHV_NH3 * eta,     0];
     
     % In-cylinder mass
     m = [M_diesel; M_NH3; M_air];
 
     % RHS
-    b = [m_diesel_k; m_NH3_k; m_air_k; Q_gross_k; m_NH3_unburned_k];
+    b = [m_diesel_k; m_NH3_k; m_air_k; Q_gross_k];
 
     % Equation
     y = A * m - b;
-    y = y .* [1e5, 1e5, 1e5, 1, 1]';
+    y = y .* [1e6, 1e6, 1e3, 1e2]';
 
 end
 

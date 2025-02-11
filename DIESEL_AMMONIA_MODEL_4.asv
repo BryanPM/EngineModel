@@ -273,10 +273,10 @@ function y = dual_fuel(x, par)
     Q_LHV_NH3    = 18.6e6;
 
     % Matrix
-    A = [ 1 - X_k * (1 - eta),            0,            0;
-                    0,           1 - X_k * (1 - eta),   0;
+    A = [ 1 - X_k * (1 - eta),                0,              0;
+                    0,           1 - X_k * (1 - eta),    0;
          X_k * AFR_diesel * eta, X_k * AFR_NH3 * eta, 1 - X_k;
-           Q_LHV_diesel * eta,     Q_LHV_NH3 * eta,     0];
+           Q_LHV_diesel * eta,       Q_LHV_NH3 * eta,     0];
     
     % In-cylinder mass
     m = [M_diesel; M_NH3; M_air];

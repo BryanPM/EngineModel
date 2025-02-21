@@ -49,15 +49,19 @@
 \usebackgroundtemplate{\includegraphics[width=\paperwidth]{figs/slide_frame.png}}
 
 % Define a new command for a mathematical symbol
-\newcommand{\Xresi}{X_{\text{res}}}
 \newcommand{\mdies}{m_{\text{in}}^{\text{dsl}}}
-\newcommand{\mammo}{m_{\text{in}}^{\text{NH3}}}
+\newcommand{\mammo}{m_{\text{in}}^{\text{NH$_3$}}}
 \newcommand{\mair}{m_{\text{in}}^{\text{air}}}
-\newcommand{\Qlhvd}{Q_{\text{LHV}}^{\text{dsl}}}
-\newcommand{\Qlhva}{Q_{\text{LHV}}^{\text{NH3}}}
-\newcommand{\Qgros}{Q_{\text{gross}}}
-\newcommand{\Mfuel}{M_{\text{fuel}}}
+\newcommand{\Mdies}{M_{\text{fuel}}^{\text{dsl}}}
+\newcommand{\Mammo}{M_{\text{fuel}}^{\text{NH$_3$}}}
 \newcommand{\Mair}{M_{\text{air}}}
+\newcommand{\AFRds}{\text{AFR}_s^{\text{dsl}}}
+\newcommand{\AFRas}{\text{AFR}_s^{\text{NH$_3$}}}
+\newcommand{\Qlhvd}{Q_{\text{LHV}}^{\text{dsl}}}
+\newcommand{\Qlhva}{Q_{\text{LHV}}^{\text{NH$_3$}}}
+\newcommand{\Xresi}{X_{\text{res}}}
+\newcommand{\Qgros}{Q_{\text{gross}}}
+\newcommand{\SOI}{\text{SOI}^{\text{dsl}}}
 
 \begin{document}
 
@@ -79,14 +83,83 @@
 }
 
 %
-% Content
+% Operating Conditions
 %
+
 \begin{frame}
 \frametitle{Ammonia-Diesel dual fuel operating conditions}
 	\centering
 		Baseline operating condition: 1200 rpm, 6 bar IMEPn target, 42 g/min ammonia fuel flow
 		\includegraphics[height=0.85\textheight]{../Model_Plots/Overview.png}
 \end{frame}
+
+%
+% Physics based model
+%
+
+\begin{frame}
+\frametitle{Physics-based model: Definitions}
+
+\begin{center}
+    \begin{tabular}{@{}cll@{}}
+        \toprule
+        Symbol & Definition & Value \\
+        \midrule
+        $\mdies$ & diesel fuel mass injected & cycle-to-cycle\\
+        $\mammo$ & ammonia fuel mass injected & cycle-to-cycle\\
+        $\mair$ & fresh air mass & cycle-to-cycle\\
+        $\Mdies$ & in-cylinder diesel fuel mass & cycle-to-cycle\\
+        $\Mammo$ &  in-cylinder ammonia fuel mass & cycle-to-cycle\\
+        $\Mair$ &  in-cylinder air mass & cycle-to-cycle\\
+        $\AFRds$ &  diesel stoichiometric air-to-fuel ratio & 14.5 \\
+        $\AFRas$ &  ammonia stoichiometric air-to-fuel ratio & 6.04 \\
+        $\Qlhvd$ &  diesel lower heating values & 44.1e6 (J)\\
+        $\Qlhva$ &  ammonia lower heating values & 18.6e6 (J)\\
+		$\eta_c$ &  combustion efficiency & cycle-to-cycle\\
+        $\Xresi$ & residual gas fraction & cycle-to-cycle\\
+        $\Qgros$ & gross heat release & cycle-to-cycle\\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Physics-based model: Formulation}
+Cycle-to-cycle dynamics
+\begin{equation*}
+    \begin{bmatrix}
+        \Mdies \\ \\ \Mammo \\ \\ \Mair
+    \end{bmatrix}_{k+1} = 
+    \Xresi[k]
+    \begin{bmatrix}
+        1 - \eta_c[k] & 0 & 0\\ \\
+        0 & 1 - \eta_c[k] & 0 \\ \\
+        -\AFRds\eta_c[k] & -\AFRas\eta_c[k] & 1
+    \end{bmatrix}
+    \begin{bmatrix}
+        \Mdies \\ \\ \Mammo \\ \\ \Mair
+    \end{bmatrix}_{k} +
+    \begin{bmatrix}
+        \mdies \\ \\ \mammo \\ \\ \mair
+    \end{bmatrix}_{k}
+\end{equation*}
+
+Gross heat release:
+\begin{equation*}
+    \Qgros[k] = \eta_c[k](\Qlhvd\Mdies[k] + \Qlhva\Mammo[k])
+\end{equation*}
+
+CA50:
+\begin{equation*}
+    \text{CA50}[k] \mid \begin{bmatrix} \Mdies[k] & \Mammo[k] & \Mair[k]& \SOI[k] \end{bmatrix} \sim \mathcal{N}(\mu_\text{CA50}, \Sigma_\text{CA50})
+\end{equation*}
+
+\end{frame}
+
+%
+% Content
+%
 
 \foreach \cond in {
 DI6_2_SOI40, DI6_4_SOI40, DI6_4_SOI41, DI6_6_SOI40, DI6_6_SOI41, DI6_8_SOI40, DI6_8_SOI41, DI7_0_SOI40, DI7_0_SOI41, DI7_0_SOI42, DI7_2_SOI40, DI7_2_SOI41, DI7_2_SOI42, DI7_4_SOI41, DI7_4_SOI42, DI7_6_SOI40, DI7_6_SOI41, DI7_6_SOI42, DI7_8_SOI41, DI7_8_SOI42, DI7_8_SOI43, DI8_0_SOI41, DI8_0_SOI42, DI8_0_SOI43, DI8_0_SOI44, DI8_2_SOI42, DI8_2_SOI43, DI8_4_SOI42, DI8_4_SOI43, DI8_4_SOI44, DI8_6_SOI42, DI8_6_SOI43, DI8_6_SOI44, DI8_8_SOI42, DI8_8_SOI43, DI8_8_SOI44, DI9_0_SOI42, DI9_0_SOI43, DI9_0_SOI44, DI9_0_SOI45, DI9_2_SOI43, DI9_2_SOI44}
@@ -97,48 +170,57 @@ DI6_2_SOI40, DI6_4_SOI40, DI6_4_SOI41, DI6_6_SOI40, DI6_6_SOI41, DI6_8_SOI40, DI
 
 \begin{frame}
 \frametitle{\final: Estimation of combustion efficiency and in-cylinder mass}
-$\eta_c = \dfrac{1 - \Xresi}{\dfrac{\mdies \Qlhvd + \mammo \Qlhva}{\Qgros} - \Xresi}$,\hspace{2em}
-$\begin{array}{l}
-\Mfuel = \dfrac{\mdies + \mammo - \Xresi\dfrac{\Qgros( \mdies + \mammo )}{\mdies \Qlhvd + \mammo \Qlhva}}{1 - \Xresi}\\
-\Mair = \dfrac{\mair + \Xresi\dfrac{\Qgros( \mdies + \mammo )}{\mdies \Qlhvd + \mammo \Qlhva}}{1 - \Xresi}
-\end{array}$
-\includegraphics[width=0.49\textwidth]{../Model_Plots/\cond_eta_c.png}
-\includegraphics[width=0.49\textwidth]{../Model_Plots/\cond_Mass.png}
+\includegraphics[width=0.49\textwidth]{../Dual_Fuel_Plots/\cond_eta_c.png}
+\includegraphics[width=0.49\textwidth]{../Dual_Fuel_Plots/\cond_Mass.png}
 \end{frame}
 
 \begin{frame}
-\frametitle{\final: Parametric model ($\mu_\eta, \Sigma_\eta, \mu_X, \Sigma_X$)}
-\hspace{3em}$\begin{array}{l}
-\begin{bmatrix} \eta_c & \Mfuel & \Mair \end{bmatrix} \sim \mathcal{N}(\mu_\eta, \Sigma_\eta) \\
-\therefore \eta_c \mid \begin{bmatrix} \Mfuel & \Mair \end{bmatrix} \sim \mathcal{N}(\bar{\mu}, \bar{\Sigma})
-\end{array}$,\hspace{5em}
-$\begin{array}{l}
-\begin{bmatrix} \Xresi & \Qgros \end{bmatrix} \sim \mathcal{N}(\mu_X, \Sigma_X) \\
-\therefore \Xresi \mid \Qgros \sim \mathcal{N}(\bar{\mu}, \bar{\Sigma})
-\end{array}$
-\includegraphics[width=0.49\textwidth]{../Model_Plots/\cond_eta_c_model.png}
-\includegraphics[width=0.49\textwidth]{../Model_Plots/\cond_X_res_model.png}
+\frametitle{\final: Parametric models}
+\centering
+$\text{CA50} \mid \begin{bmatrix} \Mdies & \Mammo & \Mair & \SOI \end{bmatrix} \sim \mathcal{N}(\mu_\text{CA50}, \Sigma_\text{CA50})$
+
+$\eta_c \mid \begin{bmatrix} \Mdies & \Mammo & \Mair \end{bmatrix} \sim \mathcal{N}(\mu_\eta, \Sigma_\eta)$
+
+$\Xresi \mid \Qgros \sim \mathcal{N}(\mu_X, \Sigma_X)$
+
+\includegraphics[width=0.32\textwidth]{../Dual_Fuel_Plots/\cond_CA50_model.png}
+\includegraphics[width=0.32\textwidth]{../Dual_Fuel_Plots/\cond_eta_c_model.png}
+\includegraphics[width=0.32\textwidth]{../Dual_Fuel_Plots/\cond_X_res_model.png}
 \end{frame}
 
 \begin{frame}
 \frametitle{\final: Simulator Results}
-{\scriptsize
-$\begin{bmatrix} \Mfuel \\ \Mair \end{bmatrix}_{k+1} = \Xresi[k]
-\begin{bmatrix} 1 - \eta_c[k] & 0 \\ \eta_c[k] & 1\end{bmatrix}
-\begin{bmatrix} \Mfuel \\ \Mair \end{bmatrix}_k + 
-\begin{bmatrix} \mammo + \mdies[k] \\ \mair \end{bmatrix}$, 
-$\Qgros[k] = \eta_c[k]\Mfuel[k]\dfrac{\mdies[k] \Qlhvd + \mammo \Qlhva}{\mdies[k] + \mammo}$}
-\begin{center}
-\includegraphics[height=0.85\textheight]{../Model_Plots/\cond_Simulator.png}
-\end{center}
+
+\centering
+\includegraphics[height=\textheight]{../Dual_Fuel_Plots/\cond_Simulator.png}
+
 \end{frame}
 }
 
 \begin{frame}
+\frametitle{Model parameter $\mu_\text{CA50}$ as function of DI strategy}
+\begin{center}
+\foreach \i in {1, 2, 3, 4, 5}{
+\includegraphics[width=0.32\textwidth]{../Dual_Fuel_Plots/mu_CA50_\i.png}
+}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Model parameter $\Sigma_\text{CA50}$ as function of DI strategy}
+\begin{center}
+\foreach \i in {1, 2, 3, 4, 5}{
+\foreach \j in {\i, ..., 5}{
+\includegraphics[width=0.18\textwidth]{../Dual_Fuel_Plots/Sigma_CA50_\i\j.png}
+}}
+\end{center}
+\end{frame}
+
+\begin{frame}
 \frametitle{Model parameter $\mu_\eta$ as function of DI strategy}
 \begin{center}
-\foreach \i in {1, 2, 3}{
-\includegraphics[width=0.36\textwidth]{../Model_Plots/mu_eta_\i.png}
+\foreach \i in {1, 2, 3, 4}{
+\includegraphics[width=0.36\textwidth]{../Dual_Fuel_Plots/mu_eta_\i.png}
 }
 \end{center}
 \end{frame}
@@ -146,9 +228,9 @@ $\Qgros[k] = \eta_c[k]\Mfuel[k]\dfrac{\mdies[k] \Qlhvd + \mammo \Qlhva}{\mdies[k
 \begin{frame}
 \frametitle{Model parameter $\Sigma_\eta$ as function of DI strategy}
 \begin{center}
-\foreach \i in {1, 2, 3}{
-\foreach \j in {\i, ..., 3}{
-\includegraphics[width=0.32\textwidth]{../Model_Plots/Sigma_eta_\i\j.png}
+\foreach \i in {1, 2, 3, 4}{
+\foreach \j in {\i, ..., 4}{
+\includegraphics[width=0.24\textwidth]{../Dual_Fuel_Plots/Sigma_eta_\i\j.png}
 }}
 \end{center}
 \end{frame}
@@ -157,7 +239,7 @@ $\Qgros[k] = \eta_c[k]\Mfuel[k]\dfrac{\mdies[k] \Qlhvd + \mammo \Qlhva}{\mdies[k
 \frametitle{Model parameter $\mu_X$ as function of DI strategy}
 \begin{center}
 \foreach \i in {1, 2}{
-\includegraphics[width=0.49\textwidth]{../Model_Plots/mu_X_\i.png}
+\includegraphics[width=0.49\textwidth]{../Dual_Fuel_Plots/mu_X_\i.png}
 }
 \end{center}
 \end{frame}
@@ -165,27 +247,25 @@ $\Qgros[k] = \eta_c[k]\Mfuel[k]\dfrac{\mdies[k] \Qlhvd + \mammo \Qlhva}{\mdies[k
 \begin{frame}
 \frametitle{Model parameter $\Sigma_X$ as function of DI strategy}
 \begin{center}
-\includegraphics[width=0.36\textwidth]{../Model_Plots/Sigma_X_11.png}
-\includegraphics[width=0.36\textwidth]{../Model_Plots/Sigma_X_12.png}
-\includegraphics[width=0.36\textwidth]{../Model_Plots/Sigma_X_22.png}
+\includegraphics[width=0.36\textwidth]{../Dual_Fuel_Plots/Sigma_X_11.png}
+\includegraphics[width=0.36\textwidth]{../Dual_Fuel_Plots/Sigma_X_12.png}
+\includegraphics[width=0.36\textwidth]{../Dual_Fuel_Plots/Sigma_X_22.png}
 \end{center}
 \end{frame}
 
-\begin{frame}
-\frametitle{Model parameters $\mu_{CA50}$ and  $\Sigma_{CA50}$ as function of DI strategy}
-\begin{center}
-\includegraphics[width=0.49\textwidth]{../Model_Plots/mu_CA50.png}
-\includegraphics[width=0.49\textwidth]{../Model_Plots/Sigma_CA50.png}
-\end{center}
-\end{frame}
 
 \begin{frame}
 \frametitle{Model performance}
 \begin{center}
 \vspace{-1em}
-\includegraphics[trim=150 0 150 0, clip, width=\textwidth]{../Model_Plots/Q_gross_comparison.png}
-\includegraphics[trim=150 0 150 0, clip, width=\textwidth]{../Model_Plots/CA50_comparison.png}
+\includegraphics[trim=150 0 150 0, clip, width=\textwidth]{../Dual_Fuel_Plots/Q_gross_comparison.png}
+\includegraphics[trim=150 0 150 0, clip, width=\textwidth]{../Dual_Fuel_Plots/CA50_comparison.png}
 \end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Control diagram}
+\includegraphics[width=\textwidth]{../Results/figs/control_diagram.pdf}
 \end{frame}
 
 \end{document}

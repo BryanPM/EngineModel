@@ -101,9 +101,18 @@ end
 %% Plot results
 
 figure
-subplot(3,1,1); plot(M_diesel*1e6); ylabel('In-cylinder diesel (mg)')
-subplot(3,1,2); plot(M_NH3*1e6); ylabel('In-cylinder ammonia (mg)')
-subplot(3,1,3); plot(M_air*1e6); ylabel('In-cylinder air (mg)')
+subplot(3,1,1); hold on; box on;
+plot(M_diesel*1e6); plot(m_diesel_c2c*1e6, '-o')
+legend('M_{in-cylinder}', 'm_{fresh}')
+ylabel('Diesel fuel (mg)')
+
+subplot(3,1,2); hold on; box on;
+plot(M_NH3*1e6); plot(m_NH3_c2c*1e6, '-o')
+ylabel('Ammonia fuel (mg)')
+
+subplot(3,1,3); hold on; box on;
+plot(M_air*1e6); plot(m_air_c2c*1e6, '-o')
+ylabel('Air (mg)')
 xlabel('Cycles');
 print(['Dual_Fuel_Plots/', baseName, 'Mass'], '-dpng', '-r300');
 
@@ -323,7 +332,7 @@ histogram(CA50_sim, "Normalization", "pdf");
 legend('Data', 'Simulator','Location','eastoutside')
 view(90, 90); set(gca, 'XDir', 'reverse');
 
-set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0, 0.5, 0.7]);
+set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0, 0.3, 0.5]);
 print(['Dual_Fuel_Plots/', baseName, 'Simulator'], '-dpng', '-r300');
 
 %% Safe file
@@ -338,8 +347,10 @@ save(['Dual_Fuel_Data/', baseName, 'Parameters.mat'], ...
     'X_res_mu', 'X_res_Sigma', ...
     'CA50_mu', 'CA50_Sigma', ...
     'Q_LHV_diesel', 'Q_LHV_NH3', ...
+    'AFR_diesel', 'AFR_NH3', ...
     'DI_quantity_des', 'DI_timing_des');
 
+close all
 end
 
 %% Functions

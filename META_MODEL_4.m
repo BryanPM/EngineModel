@@ -297,12 +297,6 @@ Sigma_CA50_55 = readmatrix([myDir, 'Sigma_CA50_55']);
 DI_QTY_interp = readmatrix([myDir, 'DI_QTY_interp']);
 DI_SOI_interp = readmatrix([myDir, 'DI_SOI_interp']);
 
-% Model parameters
-AFR_diesel = 14.5;
-AFR_NH3    = 6.04;
-Q_LHV_diesel = 44.1e6;
-Q_LHV_NH3    = 18.6e6;
-
 for i = 1:n_cycles
 
     % Mass inputs

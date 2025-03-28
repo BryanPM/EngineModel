@@ -229,6 +229,12 @@ plt.xlabel('Cycles')
 plt.show() 
 
 plt.figure()
+plt.plot(cost_c)
+plt.ylabel('Cost function')
+plt.xlabel('Cycles')
+plt.show() 
+
+plt.figure()
 plt.plot(m_diesel_EONS * 1e6, label='m_diesel_EONS (g)')
 plt.plot(SOI_diesel_EONS, label='SOI_diesel_EONS (deg)')
 plt.ylabel('Feedback from EONS')

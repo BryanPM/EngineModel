@@ -136,6 +136,7 @@ SOI_diesel_EONS = np.zeros(n_cycles)
 M_diesel_EONS = np.zeros(n_cycles)
 M_NH3_EONS = np.zeros(n_cycles)
 M_air_EONS = np.zeros(n_cycles)
+CA50_EONS = np.zeros(n_cycles)
 
 # Model parameters
 AFR_diesel = 14.5
@@ -205,6 +206,7 @@ for i in range(n_cycles):
     M_diesel_EONS[i] = (M_diesel_sim[i] - m_diesel_FF) * 1e6
     M_NH3_EONS[i] = (M_NH3_sim[i] - m_NH3_FF) * 1e5
     M_air_EONS[i] = (M_air_sim[i] - m_air_FF) * 1e4
+    CA50_EONS[i] = (CA50_sim[i] - 7) * 0.2
 
     if i < n_cycles - 1:
         # Calculate next cycle
@@ -255,6 +257,7 @@ plt.figure()
 plt.plot(M_diesel_EONS, label='state_diesel_EONS')
 plt.plot(M_NH3_EONS, label='state_NH3_EONS')
 plt.plot(M_air_EONS, label='state_air_EONS')
+plt.plot(CA50_EONS, label='state_air_EONS')
 plt.ylabel('Feedback from EONS')
 plt.legend()
 plt.xlabel('Cycles')

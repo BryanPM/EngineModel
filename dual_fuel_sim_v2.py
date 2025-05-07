@@ -132,6 +132,10 @@ cost_c = np.zeros(n_cycles)
 # Feedback from EONS
 m_diesel_EONS = np.zeros(n_cycles)
 SOI_diesel_EONS = np.zeros(n_cycles)
+# State to EONS
+M_diesel_EONS = np.zeros(n_cycles)
+M_NH3_EONS = np.zeros(n_cycles)
+M_air_EONS = np.zeros(n_cycles)
 
 # Model parameters
 AFR_diesel = 14.5
@@ -196,6 +200,11 @@ for i in range(n_cycles):
 
     # Fresh fuel and air
     input = np.array([m_diesel_total, m_NH3_FF, m_air_FF])
+    
+    # States passed from ORCAS to EONS
+    M_diesel_EONS[i] = (M_diesel_sim[i] - m_diesel_FF) * 1e6
+    M_NH3_EONS[i] = (M_NH3_sim[i] - m_NH3_FF) * 1e5
+    M_air_EONS[i] = (M_air_sim[i] - m_air_FF) * 1e4
 
     if i < n_cycles - 1:
         # Calculate next cycle
@@ -237,6 +246,15 @@ plt.show()
 plt.figure()
 plt.plot(m_diesel_EONS * 1e6, label='m_diesel_EONS (g)')
 plt.plot(SOI_diesel_EONS, label='SOI_diesel_EONS (deg)')
+plt.ylabel('Feedback from EONS')
+plt.legend()
+plt.xlabel('Cycles')
+plt.show() 
+
+plt.figure()
+plt.plot(M_diesel_EONS, label='state_diesel_EONS')
+plt.plot(M_NH3_EONS, label='state_NH3_EONS')
+plt.plot(M_air_EONS, label='state_air_EONS')
 plt.ylabel('Feedback from EONS')
 plt.legend()
 plt.xlabel('Cycles')
